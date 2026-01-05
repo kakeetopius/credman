@@ -51,7 +51,7 @@
 		       "  -f, --field FIELD		\t\tSpecifies which field or attribute of the secret to change. See Below.\n"                                            \
 		       "  -h, --help			\t\tShow this help message.\n"                                                                                                 \
 		       "  --no-auto			\t\tIf this option is given and FIELD is 'pass' then the password is not automatically generated rather asked from the user.\n" \
-		       "  --master			\t\tChange the master password used to encrypt and decrypt the storage.\n\n"                                                     \
+		       "  --master			\t\tChange the master password used to encrypt and decrypt the storage. No other option should be supplied.\n\n"                                                     \
 		       "FIELD OPTIONS:\n"                                                                                                                             \
 		       "1.login\n"                                                                                                                                    \
 		       "    uname:   The Username\n"                                                                                                                  \

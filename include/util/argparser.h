@@ -2,6 +2,7 @@
 #define ARGPARSER_H
 
 #include "commands/runners.h"
+#include <stdbool.h>
 
 typedef int (*ArgParser)(int, char **, void *); // argv, argc, struct to fill with options
 
@@ -76,6 +77,6 @@ int changeArgParser(int argc, char **argv, void *arguments);
 int getArgParser(int argc, char **argv, void *arguments);
 int deleteArgParser(int argc, char **argv, void *arguments);
 int listArgParser(int argc, char **argv, void *arguments);
-
+bool strings_match(char *prefix, char *string);
 void free_arguments(struct Command *command);
 #endif

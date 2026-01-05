@@ -31,7 +31,7 @@ int parse_args(int argc, char *argv[], struct Command **command) {
     int sub_command_found = 0;
     struct Command *subcommand = NULL;
     for (int i = 0; i < num_of_commands; i++) {
-	if (strcmp(argv[1], commands[i].name) == 0) {
+	if (strings_match(argv[1], commands[i].name)) {
 	    sub_command_found = 1;
 	    subcommand = &commands[i];
 	    break;
@@ -48,15 +48,15 @@ int parse_args(int argc, char *argv[], struct Command **command) {
 
     // initalising argument struct based on subcommand.
     void *arguments = NULL;
-    if (strcmp(subcommand->name, "add") == 0) {
+    if (strings_match(subcommand->name, "add")) {
 	arguments = malloc(sizeof(struct AddArgs));
-    } else if (strcmp(subcommand->name, "get") == 0) {
+    } else if (strings_match(subcommand->name, "get")) {
 	arguments = malloc(sizeof(struct GetArgs));
-    } else if (strcmp(subcommand->name, "change") == 0) {
+    } else if (strings_match(subcommand->name, "change")) {
 	arguments = malloc(sizeof(struct ChangeArgs));
-    } else if (strcmp(subcommand->name, "ls") == 0) {
+    } else if (strings_match(subcommand->name, "ls")) {
 	arguments = malloc(sizeof(struct ListArgs));
-    } else if (strcmp(subcommand->name, "delete") == 0) {
+    } else if (strings_match(subcommand->name, "delete")) {
 	arguments = malloc(sizeof(struct DeleteArgs));
     } else {
 	return GENERAL_ERROR;
@@ -84,26 +84,38 @@ void free_arguments(struct Command *command) {
     }
 }
 
-int check_if_help_requested(char *arg) {
-    char *help_args[] = {"-h", "--help", "help"};
-    int help_args_num = sizeof(help_args) / sizeof(help_args[0]);
-    for (int i = 0; i < help_args_num; i++) {
-	if (strcmp(arg, help_args[i]) == 0) {
-	    return USER_REQUESTED_HELP;
-	}
+bool strings_match(char *prefix, char *string) {
+    // checks if a given prefix matches the given string.
+
+    if (!*string || !*prefix) {
+	// if the string is empty.
+	return false;
     }
-    return GENERAL_ERROR;
+
+    while (*string && *string == *prefix) {
+	string++;
+	prefix++;
+    }
+
+    if (*prefix != 0) {
+	// if the prefix did not reach null terminator meaning it did not match
+	return false;
+    }
+
+    return true;
 }
 
-bool strings_match(char *str1, char *str2) {
-    if (!str1 || !str2) {
-	return false;
+int check_if_help_requested(char *arg) {
+    if (arg[0] == '-') {
+	arg++;
+	if (arg[0] == '-') {
+	    arg++;
+	}
     }
-    if (strcmp(str1, str2) == 0) {
-	return true;
-    } else {
-	return false;
+    if (strings_match(arg, "help")) {
+	return USER_REQUESTED_HELP;
     }
+    return SUCCESS_OP;
 }
 
 int addArgParser(int argc, char **argv, void *arguments) {
@@ -126,11 +138,17 @@ int addArgParser(int argc, char **argv, void *arguments) {
 
     int i = 3;
     while (i < argc) {
-	if (argv[i][0] == '-') {
-	    // if argument.
-	    if (strings_match(argv[i], "-b") || strings_match(argv[i], "--batch")) {
+	char *opt = argv[i];
+	if (opt[0] == '-') {
+	    // if argument
+	    opt++;
+	    if (opt[0] == '-') {
+		// if argument like --batch
+		opt++;
+	    }
+	    if (strings_match(opt, "batch")) {
 		args->flags = args->flags | ADD_FLAG_BATCHFILE;
-	    } else if (strings_match(argv[i], "-t") || strings_match(argv[i], "--type")) {
+	    } else if (strings_match(opt, "type")) {
 		if (argc == i + 1) {
 		    printf("No type given. Use cman add -h for more information\n");
 		    return GENERAL_ERROR;
@@ -146,9 +164,9 @@ int addArgParser(int argc, char **argv, void *arguments) {
 		}
 		i = i + 2; // skip checking the next argument.
 		continue;
-	    } else if (strings_match(argv[i], "--no-auto")) {
+	    } else if (strings_match(opt, "no-auto")) {
 		args->flags = args->flags | ADD_FLAG_NOAUTO;
-	    } else if (strings_match(argv[i], "-h") || strings_match(argv[i], "--help")) {
+	    } else if (strings_match(opt, "help")) {
 		printf("%s", ADD_MESSAGE);
 		return USER_REQUESTED_HELP;
 	    } else {
@@ -185,9 +203,15 @@ int getArgParser(int argc, char **argv, void *arguments) {
 
     int i = 3; // start after secretName
     while (i < argc) {
-	if (argv[i][0] == '-') {
-	    // if argument.
-	    if (strings_match(argv[i], "-f") || strings_match(argv[i], "--field")) {
+	char *opt = argv[i];
+	if (opt[0] == '-') {
+	    // if argument
+	    opt++;
+	    if (opt[0] == '-') {
+		// if argument like --arg
+		opt++;
+	    }
+	    if (strings_match(opt, "field")) {
 		if (argc == i + 1) {
 		    // if this is the last argument in argument list.
 		    printf("No field name given. Use cman get -h for more information\n");
@@ -213,7 +237,7 @@ int getArgParser(int argc, char **argv, void *arguments) {
 
 		i = i + 2; // skip checking the next argument.
 		continue;
-	    } else if (strings_match(argv[i], "-t") || strings_match(argv[i], "--type")) {
+	    } else if (strings_match(opt, "type")) {
 		if (argc == i + 1) {
 		    printf("No type given. Use cman get -h for more information\n");
 		    return GENERAL_ERROR;
@@ -229,9 +253,9 @@ int getArgParser(int argc, char **argv, void *arguments) {
 		}
 		i = i + 2; // skip checking the next argument.
 		continue;
-	    } else if (strings_match(argv[i], "-q") || strings_match(argv[i], "--quiet")) {
+	    } else if (strings_match(opt, "quiet")) {
 		args->flags = args->flags | GET_FLAG_QUIET;
-	    } else if (strings_match(argv[i], "-h") || strings_match(argv[i], "--help")) {
+	    } else if (strings_match(opt, "help")) {
 		printf("%s", GET_MESSAGE);
 		return USER_REQUESTED_HELP;
 	    } else {
@@ -258,7 +282,7 @@ int changeArgParser(int argc, char **argv, void *arguments) {
     }
 
     struct ChangeArgs *args = (struct ChangeArgs *)arguments;
-    if (strings_match(argv[2], "--master")) {
+    if (strcmp(argv[2], "--master") == 0) {
 	args->flags = args->flags | CHANGE_FLAG_MASTER;
 	return SUCCESS_OP;
     }
@@ -272,9 +296,15 @@ int changeArgParser(int argc, char **argv, void *arguments) {
 
     int i = 3; // start after secretName
     while (i < argc) {
-	if (argv[i][0] == '-') {
-	    // if argument.
-	    if (strings_match(argv[i], "-f") || strings_match(argv[i], "--field")) {
+	char *opt = argv[i];
+	if (opt[0] == '-') {
+	    // if argument
+	    opt++;
+	    if (opt[0] == '-') {
+		// if argument like --arg
+		opt++;
+	    }
+	    if (strings_match(opt, "field")) {
 		if (argc == i + 1) {
 		    // if this is the last argument in argument list.
 		    printf("No field name given. Use cman change -h for more information\n");
@@ -301,7 +331,7 @@ int changeArgParser(int argc, char **argv, void *arguments) {
 
 		i = i + 2; // skip checking the next argument.
 		continue;
-	    } else if (strings_match(argv[i], "-t") || strings_match(argv[i], "--type")) {
+	    } else if (strings_match(opt, "type")) {
 		if (argc == i + 1) {
 		    printf("No type given. Use cman change -h for more information\n");
 		    return GENERAL_ERROR;
@@ -317,11 +347,9 @@ int changeArgParser(int argc, char **argv, void *arguments) {
 		}
 		i = i + 2; // skip checking the next argument.
 		continue;
-	    } else if (strings_match(argv[i], "--no-auto")) {
+	    } else if (strings_match(opt, "no-auto")) {
 		args->flags = args->flags | CHANGE_FLAG_NOAUTO;
-	    } else if (strings_match(argv[i], "--master")) {
-		args->flags = args->flags | CHANGE_FLAG_MASTER;
-	    } else if (strings_match(argv[i], "-h") || strings_match(argv[i], "--help")) {
+	    } else if (strings_match(opt, "help")) {
 		printf("%s", CHANGE_MESSAGE);
 		return USER_REQUESTED_HELP;
 	    } else {
@@ -357,30 +385,42 @@ int listArgParser(int argc, char **argv, void *arguments) {
     }
     int i = 2;
     while (i < argc) {
-	if (strings_match(argv[i], "-t") || strings_match(argv[i], "--type")) {
-	    if (argc == i + 1) {
-		printf("No type given. Use cman ls -h for more information\n");
-		return GENERAL_ERROR;
+	char *opt = argv[i];
+	if (opt[0] == '-') {
+	    // if argument
+	    opt++;
+	    if (opt[0] == '-') {
+		// if argument like --arg
+		opt++;
 	    }
-	    char *type = argv[i + 1];
-	    if (strings_match(type, "login")) {
-		args->flags = args->flags | LIST_FLAG_TYPE_LOGIN;
-	    } else if (strings_match(type, "api")) {
-		args->flags = args->flags | LIST_FLAG_TYPE_APIKEY;
+	    if (strings_match(opt, "type")) {
+		if (argc == i + 1) {
+		    printf("No type given. Use cman ls -h for more information\n");
+		    return GENERAL_ERROR;
+		}
+		char *type = argv[i + 1];
+		if (strings_match(type, "login")) {
+		    args->flags = args->flags | LIST_FLAG_TYPE_LOGIN;
+		} else if (strings_match(type, "api")) {
+		    args->flags = args->flags | LIST_FLAG_TYPE_APIKEY;
+		} else {
+		    printf("Unknown type: %s. Use cman ls -h for more information.\n", type);
+		    return GENERAL_ERROR;
+		}
+		i = i + 2; // skip checking the next argument.
+		continue;
+	    } else if (strings_match(opt, "help")) {
+		printf("%s", LS_MESSAGE);
+		return USER_REQUESTED_HELP;
 	    } else {
-		printf("Unknown type: %s. Use cman ls -h for more information.\n", type);
+		printf("Unknown option: %s. Use cman ls -h for more information.\n", argv[i]);
 		return GENERAL_ERROR;
 	    }
-	    i = i + 2; // skip checking the next argument.
-	    continue;
-	} else if (strings_match(argv[i], "-h") || strings_match(argv[i], "--help")) {
-	    printf("%s", LS_MESSAGE);
-	    return USER_REQUESTED_HELP;
+	    i++;
 	} else {
 	    printf("Unknown option: %s. Use cman ls -h for more information.\n", argv[i]);
 	    return GENERAL_ERROR;
 	}
-	i++;
     }
 
     return SUCCESS_OP;
@@ -407,31 +447,43 @@ int deleteArgParser(int argc, char **argv, void *arguments) {
     args->secretName = argv[2];
     int i = 3;
     while (i < argc) {
-	if (strings_match(argv[i], "-t") || strings_match(argv[i], "--type")) {
-	    if (argc == i + 1) {
-		printf("No type given. Use cman delete -h for more information\n");
-		return GENERAL_ERROR;
+	char *opt = argv[i];
+	if (opt[0] == '-') {
+	    // if argument
+	    opt++;
+	    if (opt[0] == '-') {
+		// if argument like --arg
+		opt++;
 	    }
-	    char *type = argv[i + 1];
-	    if (strings_match(type, "login")) {
-		args->flags = args->flags | DELETE_FLAG_TYPE_LOGIN;
-	    } else if (strings_match(type, "api")) {
-		args->flags = args->flags | DELETE_FLAG_TYPE_APIKEY;
+	    if (strings_match(opt, "type")) {
+		if (argc == i + 1) {
+		    printf("No type given. Use cman delete -h for more information\n");
+		    return GENERAL_ERROR;
+		}
+		char *type = argv[i + 1];
+		if (strings_match(type, "login")) {
+		    args->flags = args->flags | DELETE_FLAG_TYPE_LOGIN;
+		} else if (strings_match(type, "api")) {
+		    args->flags = args->flags | DELETE_FLAG_TYPE_APIKEY;
+		} else {
+		    printf("Unknown type: %s. Use cman delete -h for more information.\n", type);
+		    return GENERAL_ERROR;
+		}
+		i = i + 2; // skip checking the next argument.
+		continue;
+	    } else if (strings_match(opt, "help")) {
+		printf("%s", DELETE_MESSAGE);
+		return USER_REQUESTED_HELP;
 	    } else {
-		printf("Unknown type: %s. Use cman delete -h for more information.\n", type);
+		printf("Unknown option: %s. Use cman delete -h for more information.\n", argv[i]);
 		return GENERAL_ERROR;
 	    }
-	    i = i + 2; // skip checking the next argument.
-	    continue;
-	} else if (strings_match(argv[i], "-h") || strings_match(argv[i], "--help")) {
-	    printf("%s", DELETE_MESSAGE);
-	    return USER_REQUESTED_HELP;
+	    i++;
 	} else {
-	    printf("Unknown option: %s. Use cman delete -h for more information.\n", argv[i]);
+	    printf("Unknown option: %s. Use cman ls -h for more information.\n", argv[i]);
 	    return GENERAL_ERROR;
 	}
-	i++;
     }
-
     return SUCCESS_OP;
 }
+
