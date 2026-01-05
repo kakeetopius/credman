@@ -31,7 +31,7 @@ int parse_args(int argc, char *argv[], struct Command **command) {
     int sub_command_found = 0;
     struct Command *subcommand = NULL;
     for (int i = 0; i < num_of_commands; i++) {
-	if (strings_match(argv[1], commands[i].name)) {
+	if (strings_match(argv[1], (char*)commands[i].name)) {
 	    sub_command_found = 1;
 	    subcommand = &commands[i];
 	    break;
@@ -48,15 +48,15 @@ int parse_args(int argc, char *argv[], struct Command **command) {
 
     // initalising argument struct based on subcommand.
     void *arguments = NULL;
-    if (strings_match(subcommand->name, "add")) {
+    if (strings_match((char*)subcommand->name, "add")) {
 	arguments = malloc(sizeof(struct AddArgs));
-    } else if (strings_match(subcommand->name, "get")) {
+    } else if (strings_match((char*)subcommand->name, "get")) {
 	arguments = malloc(sizeof(struct GetArgs));
-    } else if (strings_match(subcommand->name, "change")) {
+    } else if (strings_match((char*)subcommand->name, "change")) {
 	arguments = malloc(sizeof(struct ChangeArgs));
-    } else if (strings_match(subcommand->name, "ls")) {
+    } else if (strings_match((char*)subcommand->name, "ls")) {
 	arguments = malloc(sizeof(struct ListArgs));
-    } else if (strings_match(subcommand->name, "delete")) {
+    } else if (strings_match((char*)subcommand->name, "delete")) {
 	arguments = malloc(sizeof(struct DeleteArgs));
     } else {
 	return GENERAL_ERROR;

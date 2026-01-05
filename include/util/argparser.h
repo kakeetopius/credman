@@ -7,10 +7,10 @@
 typedef int (*ArgParser)(int, char **, void *); // argv, argc, struct to fill with options
 
 struct Command {
-    char *name;		 // the name of the command eg add, get, ls, change
+    const char *name;		 // the name of the command eg add, get, ls, change
     void *arguments;	 // the arguments relevant to the command that will be cast to appropriate type by the runners
-    ArgParser argparser; // a function in charge of parsing argv and initialise the relevant struct for the command
-    Runner Run;		 // a function in charge of starting execution of the command.
+    const ArgParser argparser; // a function in charge of parsing argv and initialise the relevant struct for the command
+    const Runner Run;		 // a function in charge of starting execution of the command.
 };
 
 extern struct Command commands[]; // static command objects array each having context about a particular subcommand like Get, ls etc.
