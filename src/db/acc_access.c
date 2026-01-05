@@ -28,9 +28,8 @@ int check_account_exists(sqlite3 *db, char *acc_name) {
 	exists = sqlite3_column_int(stmt, 0);
     }
 
-    return exists == 1 ? DB_ROW_EXISTS : DB_ROW_NX;
-
     sqlite3_finalize(stmt);
+    return exists == 1 ? DB_ROW_EXISTS : DB_ROW_NX;
 }
 
 int add_account_to_db(sqlite3 *db, Account acc) {

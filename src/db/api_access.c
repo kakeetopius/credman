@@ -28,9 +28,8 @@ int check_apikey_exists(sqlite3 *db, char *api_name) {
 	exists = sqlite3_column_int(stmt, 0);
     }
 
-    return exists == 1 ? DB_ROW_EXISTS : DB_ROW_NX;
-
     sqlite3_finalize(stmt);
+    return exists == 1 ? DB_ROW_EXISTS : DB_ROW_NX;
 }
 
 int add_apikey_to_db(sqlite3 *db, Api_Key key) {
