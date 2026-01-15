@@ -1,13 +1,10 @@
+use credman::objects;
+use credman::objects::Secret;
 use credman::util::ioutils;
 use credman::util::passgen;
 
 fn main() {
-    if let Err(e) = ioutils::print_prompt("Enter a number") {
-        eprintln!("{e}");
-        return;
-    }
-
-    let number = match ioutils::get_terminal_input() {
+    let uname = match ioutils::get_terminal_input("Enter User Name") {
         Ok(num) => num,
         Err(e) => {
             eprintln!("Error: {e}");
@@ -15,18 +12,27 @@ fn main() {
         }
     };
 
-    let num = match number.trim().parse::<i32>() {
-        Err(err) => {
-            eprintln!("{err}");
+    let aname = match ioutils::get_terminal_input("Enter Account Name") {
+        Ok(num) => num,
+        Err(e) => {
+            eprintln!("Error: {e}");
             return;
         }
-        Ok(num) => num,
     };
 
-    println!("You entered: {num}");
-    let pass = passgen::get_random_pass();
-    match pass {
-        Err(err) => eprintln!("Error: {}", err),
-        Ok(pass) => println!("This is your password: {}", pass),
-    }
+    let pass = match passgen::get_random_pass() {
+        Ok(pass) => pass,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            return;
+        }
+    };
+
+    let account = objects::Account {
+        account_name: aname,
+        user_name: uname,
+        password: pass,
+    };
+
+    account.print_json()
 }

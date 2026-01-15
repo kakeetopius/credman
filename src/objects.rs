@@ -1,26 +1,30 @@
 use std::fmt::Display;
 
-pub enum Secret {
-    Account(AccountObj),
-    APIKey(APIObj),
+pub trait Secret {
+    fn print_json(&self)
+    where
+        Self: Display,
+    {
+        println!("{}", self);
+    }
 }
 
 #[derive(Debug)]
-pub struct AccountObj {
-    account_name: String,
-    user_name: String,
-    password: String,
+pub struct Account {
+    pub account_name: String,
+    pub user_name: String,
+    pub password: String,
 }
 
 #[derive(Debug)]
-pub struct APIObj {
-    api_name: String,
-    api_service: String,
-    user_name: String,
-    api_key: String,
+pub struct API {
+    pub api_name: String,
+    pub api_service: String,
+    pub user_name: String,
+    pub api_key: String,
 }
 
-impl Display for AccountObj {
+impl Display for Account {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = format!(
             "Name: {}\nUser: {}\nPass: {}\n",
@@ -30,7 +34,7 @@ impl Display for AccountObj {
     }
 }
 
-impl Display for APIObj {
+impl Display for API {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = format!(
             "Name: {}\nService: {}\nUser: {}\nKey: {}\n",
@@ -39,3 +43,6 @@ impl Display for APIObj {
         write!(f, "{output}")
     }
 }
+
+impl Secret for Account {}
+impl Secret for API {}
