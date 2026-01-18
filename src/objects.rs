@@ -1,12 +1,17 @@
 use std::fmt::Display;
 
 pub trait Secret {
-    fn print_json(&self)
+    fn print(&self)
     where
         Self: Display,
     {
         println!("{}", self);
     }
+
+    //print_json()
+    //add_to_db() func
+    //print_field() -- to print a particular field from struct
+    //
 }
 
 #[derive(Debug)]
