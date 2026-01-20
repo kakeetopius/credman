@@ -1,35 +1,51 @@
 use std::fmt::Display;
 
-pub trait Secret {
-    fn print(&self)
-    where
-        Self: Display,
-    {
-        println!("{}", self);
-    }
-
-    //print_json()
-    //add_to_db() func
-    //print_field() -- to print a particular field from struct
-    //
+pub enum Secret {
+    Account(AccountObj),
+    API(APIObj),
 }
 
 #[derive(Debug)]
-pub struct Account {
+pub struct AccountObj {
     pub account_name: String,
     pub user_name: String,
     pub password: String,
 }
 
 #[derive(Debug)]
-pub struct API {
+pub struct APIObj {
     pub api_name: String,
     pub api_service: String,
     pub user_name: String,
     pub api_key: String,
 }
 
-impl Display for Account {
+impl From<AccountObj> for Secret {
+    fn from(value: AccountObj) -> Self {
+        Secret::Account(value)
+    }
+}
+
+impl From<APIObj> for Secret {
+    fn from(value: APIObj) -> Self {
+        Secret::API(value)
+    }
+}
+
+impl Secret {
+    pub fn print(&self) {
+        match self {
+            Self::Account(acc) => println!("{}", acc),
+            Self::API(api) => println!("{}", api),
+        }
+    }
+
+    //print_json()
+    //add_to_db()
+    //print_field()
+}
+
+impl Display for AccountObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = format!(
             "Name: {}\nUser: {}\nPass: {}\n",
@@ -39,7 +55,7 @@ impl Display for Account {
     }
 }
 
-impl Display for API {
+impl Display for APIObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = format!(
             "Name: {}\nService: {}\nUser: {}\nKey: {}\n",
@@ -48,6 +64,3 @@ impl Display for API {
         write!(f, "{output}")
     }
 }
-
-impl Secret for Account {}
-impl Secret for API {}
