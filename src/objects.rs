@@ -90,6 +90,17 @@ impl AccountObj {
 
         println!("{}", json);
     }
+
+    fn print_field_json(&self, field: FieldType) {
+        let json_str = match field {
+            FieldType::User => serde_json::json!({"User": self.user_name}),
+            FieldType::Secname => serde_json::json!({"Name": self.account_name}),
+            FieldType::Pass => serde_json::json!({"Pass": self.password}),
+            _ => return,
+        };
+
+        println!("{}", json_str.to_string());
+    }
 }
 
 impl APIObj {
@@ -112,12 +123,23 @@ impl APIObj {
     }
 
     fn print_json(&self) {
-        let json = match serde_json::to_string(self) {
+        let json = match serde_json::to_string_pretty(self) {
             Err(_) => "".to_string(),
             Ok(j) => j,
         };
 
         println!("{}", json);
+    }
+
+    fn print_field_json(&self, field: FieldType) {
+        let json_str = match field {
+            FieldType::Secname => serde_json::json!({"Name": &self.user_name}),
+            FieldType::Service => serde_json::json!({"Description": &self.api_service}),
+            FieldType::User => serde_json::json!({"User": &self.user_name}),
+            FieldType::Key => serde_json::json!({"Key": &self.api_key}),
+            _ => return,
+        };
+        println!("{}", json_str.to_string());
     }
 }
 
@@ -140,6 +162,13 @@ impl Secret {
         match self {
             Self::API(api) => api.print_json(),
             Self::Account(acc) => acc.print_json(),
+        }
+    }
+
+    pub fn print_field_json(&self, field: FieldType) {
+        match self {
+            Self::API(api) => api.print_field_json(field),
+            Self::Account(acc) => acc.print_field_json(field),
         }
     }
 }

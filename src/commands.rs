@@ -85,7 +85,11 @@ fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     };
 
     if let Some(fieldtype) = args.field {
-        result.print_field(fieldtype);
+        if args.json {
+            result.print_field_json(fieldtype);
+        } else {
+            result.print_field(fieldtype);
+        }
         return Ok(());
     }
 
