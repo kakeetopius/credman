@@ -7,9 +7,9 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
     after_long_help = "Note: cman checks the credential database file from the environment variable $CMAN_DBFILE.\n\
 If it is not set , cman defaults to $HOME/.creds.db.",
 )]
-pub struct Cman {
+pub struct CmanArgs {
     #[command(subcommand)]
-    pub command: Option<Commands>,
+    pub command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
@@ -45,7 +45,7 @@ pub enum Commands {
 #[derive(Args, Debug)]
 pub struct InitArgs {
     //The path to initialse the database. 
-    #[arg(short, long, default_value = "~./creds.db")]
+    #[arg(short, long, long_help = "The path to initialise the database. If not given $CMAN_DBFILE is used else $HOME/.creds.db")]
     pub path: Option<String>
 }
 

@@ -12,3 +12,7 @@ serde_json = "1.0.149"
 [dependencies.rusqlite]
 version = "0.38.0"
 features = ["bundled-sqlcipher"]
+
+[[bin]]
+name = "cman"
+path = "src/main.rs"

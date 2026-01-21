@@ -32,11 +32,11 @@ impl From<APIObj> for Secret {
     }
 }
 
-impl Secret {
-    pub fn print(&self) {
+impl Display for Secret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Account(acc) => println!("{}", acc),
-            Self::API(api) => println!("{}", api),
+            Self::Account(acc) => write!(f, "{}", acc),
+            Self::API(api) => write!(f, "{}", api),
         }
     }
 
