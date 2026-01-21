@@ -145,17 +145,13 @@ fn add_new_api(name: &str, dbcon: &Connection) -> Result {
         false,
         false,
     )?;
-    let service = get_terminal_input(
-        "Enter the Service the API Key is for or a short description",
-        false,
-        false,
-    )?;
+    let desc = get_terminal_input("Enter a short description for the API key", false, false)?;
     let apikey = get_terminal_input("Enter API Key", false, false)?;
 
     db::add_apikey_to_db(
         &APIObj {
             api_name: name.to_string(),
-            api_service: service,
+            description: desc,
             user_name: user_name,
             api_key: apikey,
         },
@@ -221,11 +217,9 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let fieldtype = args.field.unwrap_or(FieldType::Key);
     let new_value = match fieldtype {
         FieldType::Secname => get_terminal_input("Enter new name for the api key", false, false)?,
-        FieldType::Service => get_terminal_input(
-            "Enter new service/description for the API key",
-            false,
-            false,
-        )?,
+        FieldType::Desc => {
+            get_terminal_input("Enter new description for the API key", false, false)?
+        }
         FieldType::User => get_terminal_input("Enter new user name", false, false)?,
         FieldType::Key => get_terminal_input("Enter new API key", false, false)?,
         _ => return Err(CustomError::new("The given field is invalid for an API key").into()),

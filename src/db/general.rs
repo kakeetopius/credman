@@ -69,7 +69,7 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
 	CREATE TABLE api_keys (\
 	api_id INTEGER PRIMARY KEY AUTOINCREMENT,\
 	api_name VARCHAR(100) NOT NULL UNIQUE,\
-	service VARCHAR(100),\
+	description VARCHAR(100),\
 	user_name VARCHAR(100),\
 	api_key VARCHAR(256)\
 	);";

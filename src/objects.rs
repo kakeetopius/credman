@@ -19,7 +19,7 @@ pub struct AccountObj {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct APIObj {
     pub api_name: String,
-    pub api_service: String,
+    pub description: String,
     pub user_name: String,
     pub api_key: String,
 }
@@ -58,8 +58,8 @@ impl Display for AccountObj {
 impl Display for APIObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = format!(
-            "Name: {}\nService: {}\nUser: {}\nKey: {}\n",
-            self.api_name, self.api_service, self.user_name, self.api_key
+            "Name: {}\nDescription: {}\nUser: {}\nKey: {}\n",
+            self.api_name, self.description, self.user_name, self.api_key
         );
         write!(f, "{output}")
     }
@@ -107,7 +107,7 @@ impl APIObj {
     fn print(&self) {
         print_result("Name", &self.api_name);
         print_result("User", &self.user_name);
-        print_result("Desc", &self.api_service);
+        print_result("Desc", &self.description);
         print_result("Key", &self.api_key);
         println!();
     }
@@ -115,7 +115,7 @@ impl APIObj {
     fn print_field(&self, field: FieldType) {
         match field {
             FieldType::Secname => print_result("Name", &self.api_name),
-            FieldType::Service => print_result("Desc", &self.api_service),
+            FieldType::Desc => print_result("Desc", &self.description),
             FieldType::User => print_result("User", &self.user_name),
             FieldType::Key => print_result("Key", &self.api_key),
             _ => return,
@@ -134,7 +134,7 @@ impl APIObj {
     fn print_field_json(&self, field: FieldType) {
         let json_str = match field {
             FieldType::Secname => serde_json::json!({"Name": &self.user_name}),
-            FieldType::Service => serde_json::json!({"Description": &self.api_service}),
+            FieldType::Desc => serde_json::json!({"Description": &self.description}),
             FieldType::User => serde_json::json!({"User": &self.user_name}),
             FieldType::Key => serde_json::json!({"Key": &self.api_key}),
             _ => return,

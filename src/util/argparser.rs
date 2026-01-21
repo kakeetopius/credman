@@ -152,10 +152,11 @@ pub enum FieldType {
     /// The Password (LOGIN ONLY)
     Pass,
 
-    /// The service/site the API key is for. (API ONLY)
-    Service,
+    /// The description of an api key (API ONLY)
+    Desc,
 
     /// The API Key. (API ONLY)
     Key, 
 }
+
 

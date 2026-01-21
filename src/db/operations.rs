@@ -41,11 +41,11 @@ pub fn add_account_to_db(
 
 pub fn add_apikey_to_db(api: &APIObj, dbcon: &Connection) -> Result<usize, rusqlite::Error> {
     let query =
-        "INSERT INTO api_keys(api_name, service, user_name, api_key) VALUES (?1, ?2, ?3, ?4);";
+        "INSERT INTO api_keys(api_name, description, user_name, api_key) VALUES (?1, ?2, ?3, ?4);";
     let mut stmt = dbcon.prepare(query)?;
     let affected_rows = stmt.execute([
         &api.api_name,
-        &api.api_service,
+        &api.description,
         &api.user_name,
         &api.api_key,
     ])?;
@@ -91,7 +91,8 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
 }
 
 pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secret, CMError> {
-    let query = "SELECT api_name, service, user_name, api_key FROM api_keys WHERE api_name = ?1;";
+    let query =
+        "SELECT api_name, description, user_name, api_key FROM api_keys WHERE api_name = ?1;";
     let mut stmt = dbcon.prepare(query)?;
     let mut results = stmt.query([apikey_name])?;
     let result = results.next()?;
@@ -99,7 +100,7 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
     if let Some(row) = result {
         Ok(APIObj {
             api_name: row.get(0)?,
-            api_service: row.get(1)?,
+            description: row.get(1)?,
             user_name: row.get(2)?,
             api_key: row.get(3)?,
         }
@@ -130,12 +131,12 @@ pub fn get_all_accounts_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusql
 }
 
 pub fn get_all_apikeys_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqlite::Error> {
-    let query = "SELECT api_name, service, user_name, api_key FROM api_keys;";
+    let query = "SELECT api_name, description, user_name, api_key FROM api_keys;";
     let mut stmt = dbcon.prepare(query)?;
     let rows = stmt.query_map([], |row| {
         Ok(APIObj {
             api_name: row.get(0)?,
-            api_service: row.get(1)?,
+            description: row.get(1)?,
             user_name: row.get(2)?,
             api_key: row.get(3)?,
         })
@@ -182,7 +183,7 @@ pub fn change_db_apikey_field(
     let field_to_change = match field {
         FieldType::User => "user_name",
         FieldType::Secname => "api_name",
-        FieldType::Service => "service",
+        FieldType::Desc => "description",
         FieldType::Key => "api_key",
         _ => {
             return Err(CustomError::new("The given field is invalid for an api key.").into());
