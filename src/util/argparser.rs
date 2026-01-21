@@ -126,6 +126,10 @@ pub struct LsArgs {
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
+
+    /// If set, the results are returned in json form.
+    #[arg(short, long)]
+    pub json: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]

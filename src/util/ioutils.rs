@@ -34,3 +34,7 @@ fn print_prompt(prompt: &str) -> io::Result<()> {
     print!("{prompt}: ");
     io::stdout().flush()
 }
+
+pub fn print_result(field: &str, value: &str) {
+    println!("{}:   {}", field, value);
+}

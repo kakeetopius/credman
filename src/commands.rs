@@ -78,13 +78,22 @@ fn get_db_path_from_env() -> Option<String> {
 }
 
 fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
-    let field = args.secret_type.unwrap_or(SecretType::Login);
-    let result = match field {
+    let sec_type = args.secret_type.unwrap_or(SecretType::Login);
+    let result = match sec_type {
         SecretType::Login => db::get_account_from_db(&args.secret, &dbcon)?,
         SecretType::Api => db::get_apikey_from_db(&args.secret, &dbcon)?,
     };
 
-    println!("{}", result);
+    if let Some(fieldtype) = args.field {
+        result.print_field(fieldtype);
+        return Ok(());
+    }
+
+    if args.json {
+        result.print_json();
+        return Ok(());
+    }
+    result.print();
     Ok(())
 }
 
@@ -273,8 +282,14 @@ fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {
         SecretType::Api => db::get_all_apikeys_from_db(dbcon),
     }?;
 
+    if args.json {
+        let json_str = serde_json::to_string_pretty(&results).unwrap_or("".to_string());
+        println!("{}", json_str);
+        return Ok(());
+    }
+
     for result in results {
-        println!("{}", result);
+        result.print();
     }
     Ok(())
 }
