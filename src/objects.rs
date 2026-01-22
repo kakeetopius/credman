@@ -1,6 +1,8 @@
 use crate::util::argparser::FieldType;
 use crate::util::ioutils::print_result;
+
 use serde::{Deserialize, Serialize};
+
 use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize)]

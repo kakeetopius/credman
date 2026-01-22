@@ -1,9 +1,15 @@
+use crate::util::argparser::{CmanArgs, Commands};
 use crate::util::errors::{CMError, CustomError};
+
 use std::io;
 use std::io::Write;
+use std::sync::Mutex;
+
+static QUIET: Mutex<bool> = Mutex::new(false);
 
 pub fn get_terminal_input(prompt: &str, confirm: bool, _private: bool) -> Result<String, CMError> {
-    let quiet = false;
+    let quiet = shouldbequiet();
+
     if !quiet {
         print_prompt(prompt)?;
     }
@@ -36,5 +42,28 @@ fn print_prompt(prompt: &str) -> io::Result<()> {
 }
 
 pub fn print_result(field: &str, value: &str) {
-    println!("{}:   {}", field, value);
+    let quiet = shouldbequiet();
+    if !quiet {
+        print!("{}:   ", field);
+    }
+    print!("{}\n", value);
+}
+
+pub fn set_terminal_settings(args: &CmanArgs) {
+    if let Commands::Get(getargs) = &args.command {
+        if getargs.quiet {
+            let guard = QUIET.lock().ok();
+            if let Some(mut guard) = guard {
+                *guard = true;
+            }
+        }
+    }
+}
+
+fn shouldbequiet() -> bool {
+    let guard = QUIET.lock().ok();
+    match guard {
+        Some(guard) => *guard,
+        None => false,
+    }
 }

@@ -1,6 +1,8 @@
 use crate::util::errors::{CMError, CustomError};
 use crate::util::ioutils;
+
 use rusqlite::{Connection, ErrorCode, OpenFlags, Result};
+
 use std::fs::exists;
 
 pub fn get_db_con(dbfile: &str) -> Result<Connection, CMError> {
