@@ -7,9 +7,12 @@ use std::sync::Mutex;
 
 static QUIET: Mutex<bool> = Mutex::new(false);
 
-pub fn get_terminal_input(prompt: &str, confirm: bool, _private: bool) -> Result<String, CMError> {
+pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<String, CMError> {
     let quiet = shouldbequiet();
 
+    if private {
+        return get_private_input(prompt, confirm, quiet);
+    }
     if !quiet {
         print_prompt(prompt)?;
     }
@@ -33,6 +36,27 @@ pub fn get_terminal_input(prompt: &str, confirm: bool, _private: bool) -> Result
         }
     }
 
+    Ok(input.trim().to_string())
+}
+
+fn get_private_input(prompt: &str, confirm: bool, quiet: bool) -> Result<String, CMError> {
+    let prompt = &format!("{}: ", prompt);
+    let input = if quiet {
+        rpassword::read_password()?
+    } else {
+        rpassword::prompt_password(prompt)?
+    };
+
+    if confirm {
+        let input2 = if quiet {
+            rpassword::read_password()?
+        } else {
+            rpassword::prompt_password("Enter again to confirm: ")?
+        };
+        if input != input2 {
+            return Err(CustomError::new("Inputs do not match").into());
+        }
+    }
     Ok(input.trim().to_string())
 }
 

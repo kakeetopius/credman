@@ -345,13 +345,13 @@ fn add_secrets_from_batch(batch_file: &str, dbcon: &Connection) -> Result {
                 continue;
             } else if fields[1] == "master" {
                 errors_str.push_str(&format!(
-                    "Line {}: account name cannot be master.\n",
+                    "Line {}: Account name cannot be master.\n",
                     lineno
                 ));
                 lineno += 1;
                 continue;
             } else if fields[1] == "" {
-                errors_str.push_str(&format!("Line {}: account name cannot be empty.\n", lineno));
+                errors_str.push_str(&format!("Line {}: Account name cannot be empty.\n", lineno));
                 lineno += 1;
                 continue;
             }
@@ -383,11 +383,11 @@ fn add_secrets_from_batch(batch_file: &str, dbcon: &Connection) -> Result {
                 lineno += 1;
                 continue;
             } else if fields[1] == "master" {
-                errors_str.push_str(&format!("Line {}: api name cannot be master.\n", lineno));
+                errors_str.push_str(&format!("Line {}: Api name cannot be master.\n", lineno));
                 lineno += 1;
                 continue;
             } else if fields[1] == "" {
-                errors_str.push_str(&format!("Line {}: api name cannot be empty.\n", lineno));
+                errors_str.push_str(&format!("Line {}: Api name cannot be empty.\n", lineno));
                 lineno += 1;
                 continue;
             }
@@ -417,7 +417,7 @@ fn add_secrets_from_batch(batch_file: &str, dbcon: &Connection) -> Result {
     if successfull.len() > 0 {
         println!("\nSuccessfully added:");
         for name in successfull {
-            print!("{} ", name);
+            print!("{}, ", name);
         }
         println!();
     }
