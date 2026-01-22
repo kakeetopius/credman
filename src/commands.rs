@@ -102,6 +102,12 @@ fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
 }
 
 fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
+    if args.secret == "master" {
+        return Err(CustomError::new(
+            "Cannot use the name \"master\" because it is reserved for the master password",
+        )
+        .into());
+    }
     let field = args.secret_type.unwrap_or(SecretType::Login);
     match field {
         SecretType::Login => add_new_acc(&args.secret, args.no_auto, dbcon)?,
@@ -161,6 +167,12 @@ fn add_new_api(name: &str, dbcon: &Connection) -> Result {
 }
 
 fn run_change(args: &ChangeArgs, dbcon: &Connection) -> Result {
+    if args.secret == "master" {
+        db::change_db_password(dbcon)?;
+        println!("Master Password Changed Successfully");
+        return Ok(());
+    }
+
     let field = args.secret_type.unwrap_or(SecretType::Login);
     match field {
         SecretType::Login => change_acc_field(args, &dbcon)?,
@@ -245,14 +257,15 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
         return Err(CustomError::new(&format!("Account {} does not exist", args.secret)).into());
     }
     let opt = get_terminal_input(
-        &format!("Are you sure you want to delete {} (y/n)", args.secret),
+        &format!("Are you sure you want to delete {} (yes/no)", args.secret),
         false,
         false,
     )?;
-    if !opt.eq_ignore_ascii_case("y") {
+    if !opt.eq_ignore_ascii_case("yes") {
         return Ok(());
     }
     db::delete_account_from_db(&args.secret, dbcon)?;
+    println!("Account Deleted");
     Ok(())
 }
 
@@ -262,14 +275,15 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         return Err(CustomError::new(&format!("API {} does not exist", args.secret)).into());
     }
     let opt = get_terminal_input(
-        &format!("Are you sure you want to delete {} (y/n)", args.secret),
+        &format!("Are you sure you want to delete {} (yes/no)", args.secret),
         false,
         false,
     )?;
-    if !opt.eq_ignore_ascii_case("y") {
+    if !opt.eq_ignore_ascii_case("yes") {
         return Ok(());
     }
     db::delete_apikey_from_db(&args.secret, dbcon)?;
+    println!("API Key Deleted");
     Ok(())
 }
 

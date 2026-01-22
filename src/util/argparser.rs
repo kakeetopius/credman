@@ -19,7 +19,7 @@ pub enum Commands {
 
     /// Adds the given secret to storage.
     #[command(after_long_help = "Rules for batch file:\n1. Each line has comma separated details of a single secret with the type as the first field\n\
-        2. For type 'login' the format is login,secretname,username,password\n3. For type 'api' the format is api,secretname,username,service,key\n\
+        2. For type 'login' the format is login,secretname,username,password\n3. For type 'api' the format is api,secretname,username,description,key\n\
         4. If it is required that a given login credential's password is automatically generated, use ? as a placeholder ie login,secretname,username,?\n\
         \n Note: If the --type argument is not given 'login' is assumed.")]
 

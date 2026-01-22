@@ -39,6 +39,12 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
 
 fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
     let master_pass = ioutils::get_terminal_input("Enter master password", false, true)?;
+    if master_pass == "" {
+        return Err(CustomError::new("Master password cannot be empty").into());
+    }
+    let pragma_query = format!("PRAGMA cipher_log = 'off';");
+    dbcon.execute_batch(&pragma_query)?;
+
     let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
     dbcon.execute_batch(&pragma_query)?;
 
@@ -48,7 +54,7 @@ fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
             && e.code == ErrorCode::NotADatabase
         {
             return Err(CMError::Custom(CustomError::new(
-                "\nCould not decrypt database. Please check the password and try again.",
+                "Could not decrypt database. Please check the password and try again.",
             )));
         }
     }
@@ -79,6 +85,9 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
         true,
         true,
     )?;
+    if master_pass == "" {
+        return Err(CustomError::new("Master password cannot be empty").into());
+    }
     let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
     let dbcon = Connection::open(path)?;
 
@@ -88,15 +97,15 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
     Ok(dbcon)
 }
 
-pub fn change_db_password(path: &String) -> Result<(), CMError> {
-    let dbcon = Connection::open(path)?;
-    decrypt_db(&dbcon)?;
-
+pub fn change_db_password(dbcon: &Connection) -> Result<(), CMError> {
     let master_pass = ioutils::get_terminal_input(
         "Enter new master password (Make sure to remember it)",
         true,
         true,
     )?;
+    if master_pass == "" {
+        return Err(CustomError::new("Master password cannot be empty").into());
+    }
     let pragma_query = format!("PRAGMA rekey = '{}';", &master_pass);
 
     dbcon.execute_batch(&pragma_query)?;
