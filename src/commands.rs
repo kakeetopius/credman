@@ -196,7 +196,7 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     }
     let fieldtype = args.field.unwrap_or(FieldType::Pass);
     let new_value = match fieldtype {
-        FieldType::User => get_terminal_input("Enter new user name: ", false, false)?,
+        FieldType::User => get_terminal_input("Enter new user name", false, false)?,
         FieldType::Secname => {
             get_terminal_input("Enter new name for the login credential", false, false)?
         }
