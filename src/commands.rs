@@ -112,19 +112,19 @@ fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
         )
         .into());
     } else if args.batch {
-        return add_secrets_from_batch(&args.secret, dbcon);
+        return add_secrets_from_batch(&args.secret, args.passlen, dbcon);
     }
 
     let field = args.secret_type.unwrap_or(SecretType::Login);
     match field {
-        SecretType::Login => add_new_acc(&args.secret, args.no_auto, dbcon)?,
+        SecretType::Login => add_new_acc(&args.secret, args.passlen, args.no_auto, dbcon)?,
         SecretType::Api => add_new_api(&args.secret, dbcon)?,
     };
     println!("Added Successfully");
     Ok(())
 }
 
-fn add_new_acc(name: &str, noautopass: bool, dbcon: &Connection) -> Result {
+fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Connection) -> Result {
     let exists = db::check_account_exists(name, dbcon)?;
     if exists {
         return Err(CustomError::new(&format!("Account {} already exists", name)).into());
@@ -134,7 +134,7 @@ fn add_new_acc(name: &str, noautopass: bool, dbcon: &Connection) -> Result {
     let pass = if noautopass {
         get_terminal_input("Enter Password", true, true)?
     } else {
-        passgen::get_random_pass()?
+        passgen::get_random_pass(passlen)?
     };
 
     db::add_account_to_db(
@@ -198,22 +198,32 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let new_value = match fieldtype {
         FieldType::User => get_terminal_input("Enter new user name", false, false)?,
         FieldType::Secname => {
-            get_terminal_input("Enter new name for the login credential", false, false)?
+            let input =
+                get_terminal_input("Enter new name for the login credential", false, false)?;
+            let exists = db::check_account_exists(&input, dbcon)?;
+            if exists {
+                return Err(CustomError::new(&format!(
+                    "Account with name {} already exists",
+                    input
+                ))
+                .into());
+            }
+            input
         }
         FieldType::Pass => {
             let opt = get_terminal_input(
-                "Are you sure you want to change the password(y/n)",
+                "Are you sure you want to change the password(yes/no)",
                 false,
                 false,
             )?;
-            if !opt.eq_ignore_ascii_case("y") {
+            if !opt.eq_ignore_ascii_case("yes") {
                 return Ok(());
             }
             let pass: String;
             if args.no_auto {
                 pass = get_terminal_input("Enter new password", true, true)?
             } else {
-                pass = passgen::get_random_pass()?;
+                pass = passgen::get_random_pass(args.passlen)?;
             }
             pass
         }
@@ -235,7 +245,18 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     }
     let fieldtype = args.field.unwrap_or(FieldType::Key);
     let new_value = match fieldtype {
-        FieldType::Secname => get_terminal_input("Enter new name for the api key", false, false)?,
+        FieldType::Secname => {
+            let input = get_terminal_input("Enter new name for the api key", false, false)?;
+            let exists = db::check_apikey_exists(&input, dbcon)?;
+            if !exists {
+                return Err(CustomError::new(&format!(
+                    "API with name {} already exists",
+                    args.secret
+                ))
+                .into());
+            }
+            input
+        }
         FieldType::Desc => {
             get_terminal_input("Enter new description for the API key", false, false)?
         }
@@ -313,7 +334,7 @@ fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {
     Ok(())
 }
 
-fn add_secrets_from_batch(batch_file: &str, dbcon: &Connection) -> Result {
+fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Connection) -> Result {
     let file = File::open(batch_file)?;
     let reader = BufReader::new(file);
     let mut lineno = 1;
@@ -357,7 +378,7 @@ fn add_secrets_from_batch(batch_file: &str, dbcon: &Connection) -> Result {
             }
             let mut pass: String = fields[3].to_string();
             if pass == "?" {
-                pass = passgen::get_random_pass()?;
+                pass = passgen::get_random_pass(passlen)?;
             }
             let acc = AccountObj {
                 account_name: fields[1].to_string(),

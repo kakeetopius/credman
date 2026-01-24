@@ -67,6 +67,10 @@ pub struct AddArgs {
     /// automatically generating one.
     #[arg(long = "no-auto")]
     pub no_auto: bool,
+
+    /// The length of the password to generate. The default is 16 characters.
+    #[arg(short = 'l', long = "len")]
+    pub passlen: Option<usize>,
 }
 
 #[derive(Args, Debug)]
@@ -87,6 +91,10 @@ pub struct ChangeArgs {
     /// automatically generating one.
     #[arg(long = "no-auto")]
     pub no_auto: bool,
+
+    /// The length of the password to generate. The default is 16 characters.
+    #[arg(short = 'l', long = "len")]
+    pub passlen: Option<usize>,
 }
 
 #[derive(Args, Debug)]
