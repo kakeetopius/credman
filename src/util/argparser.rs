@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap_complete::Shell;
 
 /// A simple tool to manage and securely store secrets like login credentials and API keys locally.
 #[derive(Parser, Debug)]
@@ -40,6 +41,13 @@ pub enum Commands {
     /// Lists all stored secrets of a particular type.
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Ls(LsArgs),
+    
+    /// Generate shell completions
+    #[command(hide=true)]
+    Completions{
+        #[arg(value_enum)]
+        shell: Shell
+    },
 }
 
 #[derive(Args, Debug)]

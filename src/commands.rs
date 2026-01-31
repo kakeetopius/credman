@@ -8,6 +8,8 @@ use crate::util::errors::{CMError, CustomError};
 use crate::util::ioutils::get_terminal_input;
 use crate::util::passgen;
 
+use clap::CommandFactory;
+use clap_complete::generate;
 use rusqlite::Connection;
 
 use std::env::var_os;
@@ -20,6 +22,11 @@ type Result = std::result::Result<(), CMError>;
 pub fn run_command(args: &CmanArgs) -> Result {
     if let Commands::Init(args) = &args.command {
         return run_init(&args);
+    }
+    if let Commands::Completions { shell } = &args.command {
+        let mut cmd = CmanArgs::command();
+        generate(*shell, &mut cmd, "cman", &mut std::io::stdout());
+        return Ok(());
     }
 
     let dbpath = match get_db_path_from_env() {
@@ -34,7 +41,7 @@ pub fn run_command(args: &CmanArgs) -> Result {
         Commands::Change(a) => run_change(&a, &dbcon),
         Commands::Delete(a) => run_delete(&a, &dbcon),
         Commands::Ls(a) => run_list(&a, &dbcon),
-        Commands::Init(a) => run_init(&a),
+        _ => return Ok(()),
     };
     res
 }
