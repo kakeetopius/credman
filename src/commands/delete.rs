@@ -11,57 +11,103 @@ pub fn run_delete(args: &DeleteArgs, dbcon: &Connection) -> Result {
 }
 
 fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
-    let sec_name = match &args.secret {
-        Some(s) => s.clone(),
+    let accounts = match &args.secret {
+        Some(accounts) => accounts.clone(),
         None => {
-            let acc_obj = get_account_from_user(dbcon)?;
-            if let Secret::Account(acc) = acc_obj {
-                acc.account_name.clone()
+            if args.multiple {
+                let selections: Vec<String> = get::get_multiple_accounts_from_user(dbcon)?
+                    .iter()
+                    .map(|secret| secret.get_name())
+                    .collect();
+                selections
             } else {
-                "".to_string()
+                let acc_obj = get_account_from_user(dbcon)?;
+                if let Secret::Account(acc) = acc_obj {
+                    vec![acc.account_name.clone()]
+                } else {
+                    vec!["".to_string()]
+                }
             }
         }
     };
-    let exists = db::check_account_exists(&sec_name, dbcon)?;
-    if !exists {
-        return Err(CustomError::new(&format!("Account {} does not exist", sec_name)).into());
+
+    let mut error_str = String::new();
+    let mut successfull: Vec<String> = Vec::new();
+    for account in accounts {
+        let exists = db::check_account_exists(&account, dbcon)?;
+        if !exists {
+            error_str.push_str(&format!("Account {} does not exist\n", account));
+            continue;
+        }
+        let opt = get_user_confirmation(&format!(
+            "Are you sure you want to delete {} (yes/no)",
+            account
+        ))?;
+        if !opt {
+            continue;
+        }
+        db::delete_account_from_db(&account, dbcon)?;
+        successfull.push(account)
     }
-    let opt = get_user_confirmation(&format!(
-        "Are you sure you want to delete {} (yes/no)",
-        sec_name,
-    ))?;
-    if !opt {
-        return Ok(());
+
+    if successfull.len() > 0 {
+        println!("\nSuccessfully deleted:");
+        for name in successfull {
+            print!("{} ", name);
+        }
+        println!();
     }
-    db::delete_account_from_db(&sec_name, dbcon)?;
-    println!("Account Deleted");
     Ok(())
 }
 
 fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
-    let sec_name = match &args.secret {
-        Some(s) => s.clone(),
+    let apikeys = match &args.secret {
+        Some(apikeys) => apikeys.clone(),
         None => {
-            let api_obj = get_api_from_user(dbcon)?;
-            if let Secret::API(api) = api_obj {
-                api.api_name.clone()
+            if args.multiple {
+                let selections = get::get_multiple_apikeys_from_user(dbcon)?
+                    .iter()
+                    .map(|secret| secret.get_name())
+                    .collect();
+                selections
             } else {
-                "".to_string()
+                let api_obj = get_api_from_user(dbcon)?;
+                if let Secret::API(api) = api_obj {
+                    vec![api.api_name.clone()]
+                } else {
+                    vec!["".to_string()]
+                }
             }
         }
     };
-    let exists = db::check_apikey_exists(&sec_name, dbcon)?;
-    if !exists {
-        return Err(CustomError::new(&format!("API {} does not exist", sec_name)).into());
+    let mut error_str = String::new();
+    let mut successfull: Vec<String> = Vec::new();
+    for apikey in apikeys {
+        let exists = db::check_apikey_exists(&apikey, dbcon)?;
+        if !exists {
+            error_str.push_str(&format!("API Key {} does not exist\n", apikey));
+            continue;
+        }
+        let opt = get_user_confirmation(&format!(
+            "Are you sure you want to delete {} (yes/no)",
+            apikey
+        ))?;
+        if !opt {
+            continue;
+        }
+        db::delete_apikey_from_db(&apikey, dbcon)?;
+        successfull.push(apikey)
     }
-    let opt = get_user_confirmation(&format!(
-        "Are you sure you want to delete {} (yes/no)",
-        sec_name
-    ))?;
-    if !opt {
-        return Ok(());
+    if error_str != "" {
+        println!("{}", error_str)
     }
-    db::delete_apikey_from_db(&sec_name, dbcon)?;
-    println!("API Key Deleted");
+
+    if successfull.len() > 0 {
+        println!("\nSuccessfully deleted:");
+        for name in successfull {
+            print!("{} ", name);
+        }
+        println!();
+    }
     Ok(())
 }

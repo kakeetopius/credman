@@ -21,7 +21,6 @@ pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<
 
 pub fn get_terminal_input_with_suggestions<T>(
     prompt: &str,
-    help_message: &str,
     suggestions: Vec<T>,
 ) -> Result<T, CMError>
 where
@@ -31,11 +30,24 @@ where
 
     let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
 
-    let option = Select::new(prompt, suggestions)
-        .with_help_message(help_message)
-        .prompt()?;
+    let option = Select::new(prompt, suggestions).prompt()?;
 
     Ok(option)
+}
+
+pub fn get_multiple_selections_from_terminal<T>(
+    prompt: &str,
+    options: Vec<T>,
+) -> Result<Vec<T>, CMError>
+where
+    T: Display,
+{
+    let quiet = shouldbequiet();
+
+    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
+
+    let options = MultiSelect::new(prompt, options).prompt()?;
+    Ok(options)
 }
 
 fn get_private_input(prompt: &str, confirm: bool, quiet: bool) -> Result<String, CMError> {

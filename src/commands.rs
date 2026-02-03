@@ -6,7 +6,8 @@ use crate::util::argparser::{
 };
 use crate::util::errors::{CMError, CustomError};
 use crate::util::ioutils::{
-    get_terminal_input, get_terminal_input_with_suggestions, get_user_confirmation,
+    get_multiple_selections_from_terminal, get_terminal_input, get_terminal_input_with_suggestions,
+    get_user_confirmation,
 };
 use crate::util::passgen;
 

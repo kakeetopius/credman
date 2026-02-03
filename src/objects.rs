@@ -76,24 +76,33 @@ impl AccountObj {
         }
     }
 
-    fn print_json(&self) {
+    fn get_field(&self, field: FieldType) -> String {
+        match field {
+            FieldType::User => self.user_name.clone(),
+            FieldType::Secname => self.account_name.clone(),
+            FieldType::Pass => self.password.clone(),
+            _ => "".to_string(),
+        }
+    }
+
+    fn get_json_str(&self) -> String {
         let json = match serde_json::to_string_pretty(self) {
             Err(_) => "".to_string(),
             Ok(j) => j,
         };
 
-        println!("{}", json);
+        json
     }
 
-    fn print_field_json(&self, field: FieldType) {
+    fn get_field_json_str(&self, field: FieldType) -> String {
         let json_str = match field {
             FieldType::User => serde_json::json!({"User": self.user_name}),
             FieldType::Secname => serde_json::json!({"Name": self.account_name}),
             FieldType::Pass => serde_json::json!({"Pass": self.password}),
-            _ => return,
+            _ => return "".to_string(),
         };
 
-        println!("{}", json_str.to_string());
+        json_str.to_string()
     }
 }
 
@@ -116,24 +125,33 @@ impl APIObj {
         }
     }
 
-    fn print_json(&self) {
+    fn get_field(&self, field: FieldType) -> String {
+        match field {
+            FieldType::Secname => self.api_name.clone(),
+            FieldType::Desc => self.description.clone(),
+            FieldType::User => self.user_name.clone(),
+            FieldType::Key => self.api_key.clone(),
+            _ => return "".to_string(),
+        }
+    }
+    fn get_json_str(&self) -> String {
         let json = match serde_json::to_string_pretty(self) {
             Err(_) => "".to_string(),
             Ok(j) => j,
         };
 
-        println!("{}", json);
+        json
     }
 
-    fn print_field_json(&self, field: FieldType) {
+    fn get_field_json_str(&self, field: FieldType) -> String {
         let json_str = match field {
             FieldType::Secname => serde_json::json!({"Name": &self.user_name}),
             FieldType::Desc => serde_json::json!({"Description": &self.description}),
             FieldType::User => serde_json::json!({"User": &self.user_name}),
             FieldType::Key => serde_json::json!({"Key": &self.api_key}),
-            _ => return,
+            _ => return "".to_string(),
         };
-        println!("{}", json_str.to_string());
+        json_str.to_string()
     }
 }
 
@@ -152,24 +170,31 @@ impl Secret {
         }
     }
 
-    pub fn print_json(&self) {
+    pub fn get_field(&self, field: FieldType) -> String {
         match self {
-            Self::API(api) => api.print_json(),
-            Self::Account(acc) => acc.print_json(),
+            Self::API(api) => api.get_field(field),
+            Self::Account(acc) => acc.get_field(field),
         }
     }
 
-    pub fn print_field_json(&self, field: FieldType) {
+    pub fn get_json_str(&self) -> String {
         match self {
-            Self::API(api) => api.print_field_json(field),
-            Self::Account(acc) => acc.print_field_json(field),
+            Self::API(api) => api.get_json_str(),
+            Self::Account(acc) => acc.get_json_str(),
         }
     }
 
-    pub fn get_name(&self) -> &str {
+    pub fn get_field_json_str(&self, field: FieldType) -> String {
         match self {
-            Self::Account(acc) => &acc.account_name,
-            Self::API(api) => &api.api_name,
+            Self::API(api) => api.get_field_json_str(field),
+            Self::Account(acc) => acc.get_field_json_str(field),
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        match self {
+            Self::Account(acc) => acc.account_name.clone(),
+            Self::API(api) => api.api_name.clone(),
         }
     }
 }

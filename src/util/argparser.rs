@@ -107,8 +107,8 @@ pub struct ChangeArgs {
 
 #[derive(Args, Debug)]
 pub struct GetArgs {
-    /// The name of the secret to retrieve details for from storage.
-    pub secret: Option<String>,
+    /// The name(s) of the secret to retrieve details for from storage.
+    pub secret: Option<Vec<String>>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
@@ -117,6 +117,10 @@ pub struct GetArgs {
     /// An optional field to get. If not set all details of the secret are retrieved.
     #[arg(value_enum, short, long = "field")]
     pub field: Option<FieldType>,
+
+    /// If set, the interactive menu provided accepts multiple options.
+    #[arg(short, long)]
+    pub multiple: bool,
 
     /// If set, no prompts or prefixes are printed to stdout only the secret's retrieved details are printed.
     #[arg(short, long)]
@@ -129,12 +133,16 @@ pub struct GetArgs {
 
 #[derive(Args, Debug)]
 pub struct DeleteArgs {
-    /// The name of the secret to delete from storage.
-    pub secret: Option<String>,
+    /// The name(s) of the secret to delete from storage.
+    pub secret: Option<Vec<String>>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
+
+    /// If set, the interactive menu provided accepts multiple options.
+    #[arg(short, long)]
+    pub multiple: bool,
 }
 
 #[derive(Args, Debug)]

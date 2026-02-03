@@ -87,7 +87,7 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
         }
         .into())
     } else {
-        Err(CustomError::new("Account not found").into())
+        Err(CustomError::new(&format!("Account {} not found", account_name)).into())
     }
 }
 
@@ -107,7 +107,7 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
         }
         .into())
     } else {
-        Err(CustomError::new("API Key not found").into())
+        Err(CustomError::new(&format!("API Key {} not found", apikey_name)).into())
     }
 }
 

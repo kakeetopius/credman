@@ -173,7 +173,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
     if successfull.len() > 0 {
         println!("\nSuccessfully added:");
         for name in successfull {
-            print!("{}, ", name);
+            print!("{} ", name);
         }
         println!();
     }
