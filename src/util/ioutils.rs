@@ -1,8 +1,8 @@
 use crate::util::argparser::{CmanArgs, Commands};
-use crate::util::errors::{CMError, CustomError};
+use crate::util::errors::CMError;
 
-use std::io;
-use std::io::Write;
+use inquire::*;
+use std::fmt::Display;
 use std::sync::Mutex;
 
 static QUIET: Mutex<bool> = Mutex::new(false);
@@ -13,56 +13,52 @@ pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<
     if private {
         return get_private_input(prompt, confirm, quiet);
     }
-    if !quiet {
-        print_prompt(prompt)?;
-    }
-    let mut input = String::new();
+    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
 
-    if let Err(e) = io::stdin().read_line(&mut input) {
-        return Err(e.into());
-    }
+    let input = Text::new(prompt).prompt()?;
+    Ok(input)
+}
 
-    if confirm {
-        if !quiet {
-            print_prompt("Enter again to confirm")?;
-        }
-        let mut input_2 = String::new();
-        if let Err(e) = io::stdin().read_line(&mut input_2) {
-            return Err(e.into());
-        }
+pub fn get_terminal_input_with_suggestions<T>(
+    prompt: &str,
+    help_message: &str,
+    suggestions: Vec<T>,
+) -> Result<T, CMError>
+where
+    T: Display,
+{
+    let quiet = shouldbequiet();
 
-        if input != input_2 {
-            return Err(CustomError::new("Inputs do not match").into());
-        }
-    }
+    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
 
-    Ok(input.trim().to_string())
+    let option = Select::new(prompt, suggestions)
+        .with_help_message(help_message)
+        .prompt()?;
+
+    Ok(option)
 }
 
 fn get_private_input(prompt: &str, confirm: bool, quiet: bool) -> Result<String, CMError> {
-    let prompt = &format!("{}: ", prompt);
-    let input = if quiet {
-        rpassword::read_password()?
-    } else {
-        rpassword::prompt_password(prompt)?
-    };
+    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
 
-    if confirm {
-        let input2 = if quiet {
-            rpassword::read_password()?
-        } else {
-            rpassword::prompt_password("Enter again to confirm: ")?
-        };
-        if input != input2 {
-            return Err(CustomError::new("Inputs do not match").into());
-        }
+    let mut password = Password::new(prompt);
+    if !confirm {
+        password = password.without_confirmation()
     }
-    Ok(input.trim().to_string())
+
+    let input_password = password.prompt()?;
+    Ok(input_password)
 }
 
-fn print_prompt(prompt: &str) -> io::Result<()> {
-    print!("{prompt}: ");
-    io::stdout().flush()
+pub fn get_user_confirmation(message: &str) -> Result<bool, CMError> {
+    let quiet = shouldbequiet();
+    let prompt = if !quiet {
+        &format!("{}: ", message)
+    } else {
+        ""
+    };
+    let ans = Confirm::new(prompt).prompt()?;
+    Ok(ans)
 }
 
 pub fn print_result(field: &str, value: &str) {

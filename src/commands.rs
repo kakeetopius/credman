@@ -1,11 +1,13 @@
 use crate::db;
-use crate::objects::{APIObj, AccountObj};
+use crate::objects::{APIObj, AccountObj, Secret};
 use crate::util::argparser::{
     AddArgs, ChangeArgs, CmanArgs, Commands, DeleteArgs, FieldType, GetArgs, InitArgs, LsArgs,
     SecretType,
 };
 use crate::util::errors::{CMError, CustomError};
-use crate::util::ioutils::get_terminal_input;
+use crate::util::ioutils::{
+    get_terminal_input, get_terminal_input_with_suggestions, get_user_confirmation,
+};
 use crate::util::passgen;
 
 use clap::CommandFactory;
@@ -88,44 +90,71 @@ fn get_db_path_from_env() -> Option<String> {
     return None;
 }
 
+fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
+    let all_accounts = db::get_all_accounts_from_db(dbcon)?;
+    if all_accounts.len() < 1 {
+        return Err(CustomError::new(
+            "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details.",
+        ).into());
+    }
+    get_terminal_input_with_suggestions("Enter the account name", "", all_accounts)
+}
+
+fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
+    let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
+    if all_api_keys.len() < 1 {
+        return Err(CustomError::new(
+            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details.",
+        ).into());
+    }
+    get_terminal_input_with_suggestions("Enter the api key name", "", all_api_keys)
+}
+
 fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
-    let result = match sec_type {
-        SecretType::Login => db::get_account_from_db(&args.secret, &dbcon)?,
-        SecretType::Api => db::get_apikey_from_db(&args.secret, &dbcon)?,
+    let secret = match &args.secret {
+        Some(s) => match sec_type {
+            SecretType::Login => db::get_account_from_db(&s, &dbcon)?,
+            SecretType::Api => db::get_apikey_from_db(&s, &dbcon)?,
+        },
+        None => match sec_type {
+            SecretType::Login => get_account_from_user(dbcon)?,
+            SecretType::Api => get_api_from_user(dbcon)?,
+        },
     };
 
     if let Some(fieldtype) = args.field {
         if args.json {
-            result.print_field_json(fieldtype);
+            secret.print_field_json(fieldtype);
         } else {
-            result.print_field(fieldtype);
+            secret.print_field(fieldtype);
         }
         return Ok(());
     }
 
     if args.json {
-        result.print_json();
+        secret.print_json();
         return Ok(());
     }
-    result.print();
+    secret.print();
     Ok(())
 }
 
 fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
-    if args.secret == "master" {
+    let sec_type = args.secret_type.unwrap_or(SecretType::Login);
+    let sec_name = &args.secret;
+    if sec_name == "master" {
         return Err(CustomError::new(
             "Cannot use the name \"master\" because it is reserved for the master password",
         )
         .into());
     } else if args.batch {
-        return add_secrets_from_batch(&args.secret, args.passlen, dbcon);
+        return add_secrets_from_batch(sec_name, args.passlen, dbcon);
     }
 
-    let field = args.secret_type.unwrap_or(SecretType::Login);
-    match field {
-        SecretType::Login => add_new_acc(&args.secret, args.passlen, args.no_auto, dbcon)?,
-        SecretType::Api => add_new_api(&args.secret, dbcon)?,
+    match sec_type {
+        SecretType::Login => add_new_acc(sec_name, args.passlen, args.no_auto, dbcon)?,
+        SecretType::Api => add_new_api(sec_name, dbcon)?,
     };
     println!("Added Successfully");
     Ok(())
@@ -181,25 +210,38 @@ fn add_new_api(name: &str, dbcon: &Connection) -> Result {
 }
 
 fn run_change(args: &ChangeArgs, dbcon: &Connection) -> Result {
-    if args.secret == "master" {
-        db::change_db_password(dbcon)?;
-        println!("Master Password Changed Successfully");
-        return Ok(());
+    let sec_type = args.secret_type.unwrap_or(SecretType::Login);
+    if let Some(s) = &args.secret {
+        if s == "master" {
+            db::change_db_password(dbcon)?;
+            println!("Master Password Changed Successfully");
+            return Ok(());
+        }
     }
 
-    let field = args.secret_type.unwrap_or(SecretType::Login);
-    match field {
+    match sec_type {
         SecretType::Login => change_acc_field(args, &dbcon)?,
         SecretType::Api => change_api_field(args, &dbcon)?,
     };
-    println!("Changed Successfully");
     Ok(())
 }
 
 fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
-    let exists = db::check_account_exists(&args.secret, dbcon)?;
+    let sec_name = match &args.secret {
+        Some(s) => s.clone(),
+        None => {
+            let account = get_account_from_user(dbcon)?;
+            if let Secret::Account(acc) = account {
+                acc.account_name.clone()
+            } else {
+                "".to_string()
+            }
+        }
+    };
+
+    let exists = db::check_account_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(CustomError::new(&format!("Account {} does not exist", args.secret)).into());
+        return Err(CustomError::new(&format!("Account {} does not exist", sec_name)).into());
     }
     let fieldtype = args.field.unwrap_or(FieldType::Pass);
     let new_value = match fieldtype {
@@ -215,15 +257,19 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
                 ))
                 .into());
             }
+            if input == "master" {
+                return Err(CustomError::new(
+                    "Cannot change name to \"master\" because it reserved for master password.",
+                )
+                .into());
+            }
             input
         }
         FieldType::Pass => {
-            let opt = get_terminal_input(
-                "Are you sure you want to change the password(yes/no)",
-                false,
-                false,
-            )?;
-            if !opt.eq_ignore_ascii_case("yes") {
+            let opt =
+                get_user_confirmation("Are you sure you want to change the password(yes/no)")?;
+
+            if !opt {
                 return Ok(());
             }
             let pass: String;
@@ -241,14 +287,26 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
         }
     };
 
-    db::change_db_account_field(&args.secret, fieldtype, &new_value, dbcon)?;
+    db::change_db_account_field(&sec_name, fieldtype, &new_value, dbcon)?;
+    println!("Changed Successfully");
     Ok(())
 }
 
 fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
-    let exists = db::check_apikey_exists(&args.secret, dbcon)?;
+    let sec_name = match &args.secret {
+        Some(s) => s.clone(),
+        None => {
+            let api_obj = get_api_from_user(dbcon)?;
+            if let Secret::API(api) = api_obj {
+                api.api_name.clone()
+            } else {
+                "".to_string()
+            }
+        }
+    };
+    let exists = db::check_apikey_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(CustomError::new(&format!("API {} does not exist", args.secret)).into());
+        return Err(CustomError::new(&format!("API {} does not exist", sec_name)).into());
     }
     let fieldtype = args.field.unwrap_or(FieldType::Key);
     let new_value = match fieldtype {
@@ -258,8 +316,14 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             if !exists {
                 return Err(CustomError::new(&format!(
                     "API with name {} already exists",
-                    args.secret
+                    sec_name
                 ))
+                .into());
+            }
+            if input == "master" {
+                return Err(CustomError::new(
+                    "Cannot change name to \"master\" because it reserved for master password.",
+                )
                 .into());
             }
             input
@@ -272,7 +336,8 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
         _ => return Err(CustomError::new("The given field is invalid for an API key").into()),
     };
 
-    db::change_db_apikey_field(&args.secret, fieldtype, &new_value, dbcon)?;
+    db::change_db_apikey_field(&sec_name, fieldtype, &new_value, dbcon)?;
+    println!("Changed Successfully");
     Ok(())
 }
 
@@ -287,37 +352,57 @@ fn run_delete(args: &DeleteArgs, dbcon: &Connection) -> Result {
 }
 
 fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
-    let exists = db::check_account_exists(&args.secret, dbcon)?;
+    let sec_name = match &args.secret {
+        Some(s) => s.clone(),
+        None => {
+            let acc_obj = get_account_from_user(dbcon)?;
+            if let Secret::Account(acc) = acc_obj {
+                acc.account_name.clone()
+            } else {
+                "".to_string()
+            }
+        }
+    };
+    let exists = db::check_account_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(CustomError::new(&format!("Account {} does not exist", args.secret)).into());
+        return Err(CustomError::new(&format!("Account {} does not exist", sec_name)).into());
     }
-    let opt = get_terminal_input(
-        &format!("Are you sure you want to delete {} (yes/no)", args.secret),
-        false,
-        false,
-    )?;
-    if !opt.eq_ignore_ascii_case("yes") {
+    let opt = get_user_confirmation(&format!(
+        "Are you sure you want to delete {} (yes/no)",
+        sec_name,
+    ))?;
+    if !opt {
         return Ok(());
     }
-    db::delete_account_from_db(&args.secret, dbcon)?;
+    db::delete_account_from_db(&sec_name, dbcon)?;
     println!("Account Deleted");
     Ok(())
 }
 
 fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
-    let exists = db::check_apikey_exists(&args.secret, dbcon)?;
+    let sec_name = match &args.secret {
+        Some(s) => s.clone(),
+        None => {
+            let api_obj = get_api_from_user(dbcon)?;
+            if let Secret::API(api) = api_obj {
+                api.api_name.clone()
+            } else {
+                "".to_string()
+            }
+        }
+    };
+    let exists = db::check_apikey_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(CustomError::new(&format!("API {} does not exist", args.secret)).into());
+        return Err(CustomError::new(&format!("API {} does not exist", sec_name)).into());
     }
-    let opt = get_terminal_input(
-        &format!("Are you sure you want to delete {} (yes/no)", args.secret),
-        false,
-        false,
-    )?;
-    if !opt.eq_ignore_ascii_case("yes") {
+    let opt = get_user_confirmation(&format!(
+        "Are you sure you want to delete {} (yes/no)",
+        sec_name
+    ))?;
+    if !opt {
         return Ok(());
     }
-    db::delete_apikey_from_db(&args.secret, dbcon)?;
+    db::delete_apikey_from_db(&sec_name, dbcon)?;
     println!("API Key Deleted");
     Ok(())
 }

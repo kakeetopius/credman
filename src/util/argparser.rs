@@ -85,7 +85,7 @@ pub struct AddArgs {
 pub struct ChangeArgs {
     /// The name of the secret to change details for. If the word "master" is given the master password is
     /// what is changed.
-    pub secret: String,
+    pub secret: Option<String>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
@@ -108,7 +108,7 @@ pub struct ChangeArgs {
 #[derive(Args, Debug)]
 pub struct GetArgs {
     /// The name of the secret to retrieve details for from storage.
-    pub secret: String,
+    pub secret: Option<String>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
@@ -130,7 +130,7 @@ pub struct GetArgs {
 #[derive(Args, Debug)]
 pub struct DeleteArgs {
     /// The name of the secret to delete from storage.
-    pub secret: String,
+    pub secret: Option<String>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]

@@ -26,6 +26,7 @@ impl Error for CustomError {}
 pub enum CMError {
     RusqlilteError(rusqlite::Error),
     IOError(std::io::Error),
+    InquireError(inquire::InquireError),
     Custom(CustomError),
 }
 
@@ -35,6 +36,7 @@ impl fmt::Display for CMError {
             Self::RusqlilteError(err) => write!(f, "Database Error: {}", err),
             Self::IOError(err) => write!(f, "IO error: {}", err),
             Self::Custom(err) => write!(f, "Error: {}", err),
+            Self::InquireError(err) => write!(f, "Error: {}", err),
         }
     }
 }
@@ -54,5 +56,11 @@ impl From<std::io::Error> for CMError {
 impl From<CustomError> for CMError {
     fn from(value: CustomError) -> Self {
         CMError::Custom(value)
+    }
+}
+
+impl From<inquire::InquireError> for CMError {
+    fn from(value: inquire::InquireError) -> Self {
+        CMError::InquireError(value)
     }
 }

@@ -25,12 +25,10 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
     if let rusqlite::Error::SqliteFailure(e, _) = err
         && e.code == ErrorCode::CannotOpen
     {
-        let opt = ioutils::get_terminal_input(
-            "Could not find Database file. Do you want to initialise it(y/n)",
-            false,
-            false,
+        let opt = ioutils::get_user_confirmation(
+            "Could not find Database file. Do you want to initialise it",
         )?;
-        if opt.eq_ignore_ascii_case("y") {
+        if opt {
             let con = create_new_db(db_path)?;
             return Ok(con);
         }
@@ -40,7 +38,7 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
 }
 
 fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
-    let master_pass = ioutils::get_terminal_input("Enter master password", false, true)?;
+    let master_pass = ioutils::get_terminal_input("Enter cman master password", false, true)?;
     if master_pass == "" {
         return Err(CustomError::new("Master password cannot be empty").into());
     }

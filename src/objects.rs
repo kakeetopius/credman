@@ -5,20 +5,20 @@ use serde::{Deserialize, Serialize};
 
 use std::fmt::Display;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Secret {
     Account(AccountObj),
     API(APIObj),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountObj {
     pub account_name: String,
     pub user_name: String,
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct APIObj {
     pub api_name: String,
     pub description: String,
@@ -49,21 +49,13 @@ impl Display for Secret {
 
 impl Display for AccountObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output = format!(
-            "Name: {}\nUser: {}\nPass: {}\n",
-            self.account_name, self.user_name, self.password
-        );
-        write!(f, "{output}")
+        write!(f, "{}", self.account_name)
     }
 }
 
 impl Display for APIObj {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output = format!(
-            "Name: {}\nDescription: {}\nUser: {}\nKey: {}\n",
-            self.api_name, self.description, self.user_name, self.api_key
-        );
-        write!(f, "{output}")
+        write!(f, "{}", self.api_name)
     }
 }
 
@@ -171,6 +163,13 @@ impl Secret {
         match self {
             Self::API(api) => api.print_field_json(field),
             Self::Account(acc) => acc.print_field_json(field),
+        }
+    }
+
+    pub fn get_name(&self) -> &str {
+        match self {
+            Self::Account(acc) => &acc.account_name,
+            Self::API(api) => &api.api_name,
         }
     }
 }
