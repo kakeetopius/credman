@@ -30,6 +30,8 @@ use get::get_api_from_user;
 
 type Result = std::result::Result<(), CMError>;
 
+const DB_ENV_VAR: &str = "CMAN_DBFILE";
+
 pub fn run_command(args: &CmanArgs) -> Result {
     if let Commands::Init(args) = &args.command {
         return run_init(&args);
@@ -81,7 +83,7 @@ fn run_init(args: &InitArgs) -> Result {
 }
 
 fn get_db_path_from_env() -> Option<String> {
-    let path = var_os("CMAN_DBFILE").and_then(|v| v.into_string().ok());
+    let path = var_os(DB_ENV_VAR).and_then(|v| v.into_string().ok());
 
     if let Some(credman_path) = path {
         if credman_path != "" {

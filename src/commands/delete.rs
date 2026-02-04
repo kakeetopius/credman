@@ -57,6 +57,9 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
         }
         println!();
     }
+    if error_str != "" {
+        return Err(CustomError::new(&error_str).into());
+    }
     Ok(())
 }
 
@@ -98,9 +101,6 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         db::delete_apikey_from_db(&apikey, dbcon)?;
         successfull.push(apikey)
     }
-    if error_str != "" {
-        println!("{}", error_str)
-    }
 
     if successfull.len() > 0 {
         println!("\nSuccessfully deleted:");
@@ -108,6 +108,9 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
             print!("{} ", name);
         }
         println!();
+    }
+    if error_str != "" {
+        return Err(CustomError::new(&error_str).into());
     }
     Ok(())
 }

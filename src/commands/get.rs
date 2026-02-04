@@ -26,6 +26,10 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
         },
     };
 
+    if secrets.len() < 1 {
+        return Ok(());
+    }
+
     // if user requires json we combine everything in a single json object.
     if args.json {
         if let Some(fieldtype) = args.field {
