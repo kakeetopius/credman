@@ -84,7 +84,7 @@ pub struct AddArgs {
     #[arg(
         short,
         long,
-        long_help = "If set, the SECRET_NAME is treated as file containing credentials one per line."
+        long_help = "The SECRET_NAME is treated as file containing credentials one per line."
     )]
     pub batch: bool,
 }
