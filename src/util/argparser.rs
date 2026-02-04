@@ -4,7 +4,7 @@ use clap_complete::Shell;
 /// A simple tool to manage and securely store secrets like login credentials and API keys locally.
 #[derive(Parser, Debug)]
 #[command
-    (version, about, long_about = None, 
+    (version, about, long_about = None, author = "Kakeeto Pius",
     after_long_help = "Note: cman checks the credential database file from the environment variable $CMAN_DBFILE.\n\
 If it is not set , cman defaults to $HOME/.creds.db.",
 )]
@@ -18,43 +18,48 @@ pub enum Commands {
     /// Create a new database.
     Init(InitArgs),
 
-    /// Adds the given secret to storage.
-    #[command(after_long_help = "Rules for batch file:\n1. Each line has comma separated details of a single secret with the type as the first field\n\
+    /// Add a secret to storage.
+    #[command(
+        after_long_help = "Rules for batch file:\n1. Each line has comma separated details of a single secret with the type as the first field\n\
         2. For type 'login' the format is login,secretname,username,password\n3. For type 'api' the format is api,secretname,username,description,key\n\
         4. If it is required that a given login credential's password is automatically generated, use ? as a placeholder ie login,secretname,username,?\n\
-        \n Note: If the --type argument is not given 'login' is assumed.")]
-
+        \n Note: If the --type argument is not given 'login' is assumed."
+    )]
     Add(AddArgs),
 
-    /// Alters details of a particular secret.
+    /// Alter details of a particular secret.
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Change(ChangeArgs),
 
-    /// Retrieves details about a particular secret.
+    /// Retrieve details about one or more secrets.
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Get(GetArgs),
 
-    /// Deletes a given secret permanently from storage. Use with care.
+    /// Delete one or more secrets permanently from storage. Use with care.
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Delete(DeleteArgs),
 
-    /// Lists all stored secrets of a particular type.
+    /// List all stored secrets of a particular type.
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Ls(LsArgs),
-    
+
     /// Generate shell completions
-    #[command(hide=true)]
-    Completions{
+    #[command(hide = true)]
+    Completions {
         #[arg(value_enum)]
-        shell: Shell
+        shell: Shell,
     },
 }
 
 #[derive(Args, Debug)]
 pub struct InitArgs {
-    //The path to initialse the database. 
-    #[arg(short, long, long_help = "The path to initialise the database. If not given $CMAN_DBFILE is used else $HOME/.creds.db")]
-    pub path: Option<String>
+    //The path to initialse the database.
+    #[arg(
+        short,
+        long,
+        long_help = "The path to initialise the database. If not given $CMAN_DBFILE is used if that variable is not set, $HOME/.creds.db is used."
+    )]
+    pub path: Option<String>,
 }
 
 #[derive(Args, Debug)]
@@ -67,18 +72,21 @@ pub struct AddArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// If set, the SECRET_NAME is treated as file containing credentials one per line (Use cman add --help for more details).
-    #[arg(short, long, long_help = "If set, the SECRET_NAME is treated as file containing credentials one per line.")]
-    pub batch: bool,
-
-    /// If set, it specifies that the password should be prompted from the user instead of
-    /// automatically generating one.
-    #[arg(long = "no-auto")]
-    pub no_auto: bool,
-
     /// The length of the password to generate. The default is 16 characters.
     #[arg(short = 'l', long = "len")]
     pub passlen: Option<usize>,
+
+    /// Do not automatically generate the password, the user is instead prompted for one.
+    #[arg(long = "no-auto")]
+    pub no_auto: bool,
+
+    /// The SECRET_NAME is treated as file containing credentials one per line (Use cman add --help for more details).
+    #[arg(
+        short,
+        long,
+        long_help = "If set, the SECRET_NAME is treated as file containing credentials one per line."
+    )]
+    pub batch: bool,
 }
 
 #[derive(Args, Debug)]
@@ -91,18 +99,17 @@ pub struct ChangeArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// The field to change.
+    /// The field of the secret to change.
     #[arg(value_enum, short, long = "field")]
     pub field: Option<FieldType>,
-
-    /// If set, it specifies that the password should be prompted from the user instead of
-    /// automatically generating one.
-    #[arg(long = "no-auto")]
-    pub no_auto: bool,
 
     /// The length of the password to generate. The default is 16 characters.
     #[arg(short = 'l', long = "len")]
     pub passlen: Option<usize>,
+
+    /// Do not automatically generate a password, the user is instead prompted for one.
+    #[arg(long = "no-auto")]
+    pub no_auto: bool,
 }
 
 #[derive(Args, Debug)]
@@ -114,19 +121,20 @@ pub struct GetArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// An optional field to get. If not set all details of the secret are retrieved.
+    /// Get a particular field of the secret(s)
     #[arg(value_enum, short, long = "field")]
     pub field: Option<FieldType>,
 
-    /// If set, the interactive menu provided accepts multiple options.
+    /// Accept mutliple inputs from the interactive menu provided only if no secret name is given
+    /// as part of the command line arguments.
     #[arg(short, long)]
     pub multiple: bool,
 
-    /// If set, no prompts or prefixes are printed to stdout only the secret's retrieved details are printed.
+    /// Do not print prompts or prefixes to stdout. Only the secret's retrieved details are printed.
     #[arg(short, long)]
     pub quiet: bool,
-    
-    /// If set, the results are returned in json form.
+
+    /// Print the results returned in json form.
     #[arg(short, long)]
     pub json: bool,
 }
@@ -140,7 +148,8 @@ pub struct DeleteArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// If set, the interactive menu provided accepts multiple options.
+    /// Accept mutliple inputs from the interactive menu provided only if no secret name is given
+    /// as part of the command line arguments..
     #[arg(short, long)]
     pub multiple: bool,
 }
@@ -151,17 +160,17 @@ pub struct LsArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// If set, the results are returned in json form.
+    /// Print the results returned in json form.
     #[arg(short, long)]
     pub json: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
 pub enum SecretType {
-    /// Specifies that the secret type is a login credential.
+    /// The secret is a login credential.
     Login,
 
-    /// Specifies that the secret type is an API key.
+    /// The secret is an API key.
     Api,
 }
 
@@ -180,7 +189,5 @@ pub enum FieldType {
     Desc,
 
     /// The API Key. (API ONLY)
-    Key, 
+    Key,
 }
-
-
