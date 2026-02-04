@@ -60,6 +60,7 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
         return Ok(());
     }
 
+    println!();
     for secret in secrets {
         if let Some(fieldtype) = args.field {
             secret.print_field(fieldtype);
