@@ -15,10 +15,10 @@ use clap::CommandFactory;
 use clap_complete::generate;
 use rusqlite::Connection;
 
+use std::env::home_dir;
 use std::env::var_os;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::Path;
 
 mod add;
 mod change;
@@ -91,9 +91,8 @@ fn get_db_path_from_env() -> Option<String> {
         }
     }
 
-    let home = var_os("HOME").and_then(|v| v.into_string().ok());
+    let home = home_dir();
     if let Some(home_path) = home {
-        let home_path = Path::new(&home_path);
         let creds_path_buf = home_path.join(".creds.db");
         return Some(creds_path_buf.to_string_lossy().to_string());
     }
