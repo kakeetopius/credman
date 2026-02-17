@@ -50,14 +50,14 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
         successfull.push(account)
     }
 
-    if successfull.len() > 0 {
+    if !successfull.is_empty() {
         println!("\nSuccessfully deleted:");
         for name in successfull {
             print!("{} ", name);
         }
         println!();
     }
-    if error_str != "" {
+    if !error_str.is_empty() {
         return Err(CustomError::new(&error_str).into());
     }
     Ok(())
@@ -68,11 +68,10 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         Some(apikeys) => apikeys.clone(),
         None => {
             if args.multiple {
-                let selections = get::get_multiple_apikeys_from_user(dbcon)?
+                get::get_multiple_apikeys_from_user(dbcon)?
                     .iter()
                     .map(|secret| secret.get_name())
-                    .collect();
-                selections
+                    .collect()
             } else {
                 let api_obj = get_api_from_user(dbcon)?;
                 if let Secret::API(api) = api_obj {
@@ -102,14 +101,14 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         successfull.push(apikey)
     }
 
-    if successfull.len() > 0 {
+    if !successfull.is_empty() {
         println!("\nSuccessfully deleted:");
         for name in successfull {
             print!("{} ", name);
         }
         println!();
     }
-    if error_str != "" {
+    if !error_str.is_empty() {
         return Err(CustomError::new(&error_str).into());
     }
     Ok(())

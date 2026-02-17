@@ -34,7 +34,7 @@ const DB_ENV_VAR: &str = "CMAN_DBFILE";
 
 pub fn run_command(args: &CmanArgs) -> Result {
     if let Commands::Init(args) = &args.command {
-        return run_init(&args);
+        return run_init(args);
     }
     if let Commands::Completions { shell } = &args.command {
         let mut cmd = CmanArgs::command();
@@ -48,47 +48,41 @@ pub fn run_command(args: &CmanArgs) -> Result {
     };
     let dbcon = db::get_db_con(&dbpath)?;
 
-    let res = match &args.command {
-        Commands::Add(a) => add::run_add(&a, &dbcon),
-        Commands::Get(a) => get::run_get(&a, &dbcon),
-        Commands::Change(a) => change::run_change(&a, &dbcon),
-        Commands::Delete(a) => delete::run_delete(&a, &dbcon),
-        Commands::Ls(a) => run_list(&a, &dbcon),
-        _ => return Ok(()),
-    };
-    res
+    match &args.command {
+        Commands::Add(a) => add::run_add(a, &dbcon),
+        Commands::Get(a) => get::run_get(a, &dbcon),
+        Commands::Change(a) => change::run_change(a, &dbcon),
+        Commands::Delete(a) => delete::run_delete(a, &dbcon),
+        Commands::Ls(a) => run_list(a, &dbcon),
+        _ => Ok(()),
+    }
 }
 
 fn run_init(args: &InitArgs) -> Result {
     let path = match &args.path {
         Some(p) => p.clone(),
-        None => {
-            let path_from_env_vars = match get_db_path_from_env() {
-                None => {
-                    return Err(CustomError::new(
-                        "Could not get Database path. Try passing --path argument.",
-                    )
-                    .into());
-                }
-                Some(p) => p,
-            };
-            path_from_env_vars
-        }
+        None => match get_db_path_from_env() {
+            None => {
+                return Err(CustomError::new(
+                    "Could not get Database path. Try passing --path argument.",
+                )
+                .into());
+            }
+            Some(p) => p,
+        },
     };
 
-    if let Err(err) = db::create_new_db(&path) {
-        return Err(err);
-    }
+    db::create_new_db(&path)?;
     Ok(())
 }
 
 fn get_db_path_from_env() -> Option<String> {
     let path = var_os(DB_ENV_VAR).and_then(|v| v.into_string().ok());
 
-    if let Some(credman_path) = path {
-        if credman_path != "" {
-            return Some(credman_path);
-        }
+    if let Some(credman_path) = path
+        && !credman_path.is_empty()
+    {
+        return Some(credman_path);
     }
 
     let home = home_dir();
@@ -97,7 +91,7 @@ fn get_db_path_from_env() -> Option<String> {
         return Some(creds_path_buf.to_string_lossy().to_string());
     }
 
-    return None;
+    None
 }
 
 fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {

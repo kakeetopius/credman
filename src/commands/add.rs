@@ -36,7 +36,7 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
     db::add_account_to_db(
         &AccountObj {
             account_name: name.to_string(),
-            user_name: user_name,
+            user_name,
             password: pass,
         },
         dbcon,
@@ -61,7 +61,7 @@ fn add_new_api(name: &str, dbcon: &Connection) -> Result {
         &APIObj {
             api_name: name.to_string(),
             description: desc,
-            user_name: user_name,
+            user_name,
             api_key: apikey,
         },
         dbcon,
@@ -79,7 +79,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
     for line in reader.lines() {
         let line = line?;
         let line = line.trim();
-        if line == "" {
+        if line.is_empty() {
             lineno += 1;
             continue;
         }
@@ -106,7 +106,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
                 ));
                 lineno += 1;
                 continue;
-            } else if fields[1] == "" {
+            } else if fields[1].is_empty() {
                 errors_str.push_str(&format!("Line {}: Account name cannot be empty.\n", lineno));
                 lineno += 1;
                 continue;
@@ -121,7 +121,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
                 password: pass,
             };
             match db::add_account_to_db(&acc, dbcon) {
-                Err(e) => errors_str.push_str(&format!("Line {}: {}", lineno, e.to_string())),
+                Err(e) => errors_str.push_str(&format!("Line {}: {}", lineno, e)),
                 Ok(_) => successfull.push(fields[1].to_string()),
             }
         } else if fields[0] == "api" {
@@ -142,7 +142,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
                 errors_str.push_str(&format!("Line {}: Api name cannot be master.\n", lineno));
                 lineno += 1;
                 continue;
-            } else if fields[1] == "" {
+            } else if fields[1].is_empty() {
                 errors_str.push_str(&format!("Line {}: Api name cannot be empty.\n", lineno));
                 lineno += 1;
                 continue;
@@ -155,7 +155,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
             };
 
             match db::add_apikey_to_db(&api, dbcon) {
-                Err(e) => errors_str.push_str(&format!("Line {}: {}", lineno, e.to_string())),
+                Err(e) => errors_str.push_str(&format!("Line {}: {}", lineno, e)),
                 Ok(_) => successfull.push(fields[1].to_string()),
             }
         } else {
@@ -166,11 +166,11 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
         }
         lineno += 1;
     }
-    if errors_str != "" {
+    if !errors_str.is_empty() {
         println!("Got some errors:\n{}", errors_str);
         println!("Use cman add --help for more details");
     }
-    if successfull.len() > 0 {
+    if !successfull.is_empty() {
         println!("\nSuccessfully added:");
         for name in successfull {
             print!("{} ", name);

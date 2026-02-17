@@ -72,7 +72,7 @@ impl AccountObj {
             FieldType::User => print_result("User", &self.user_name),
             FieldType::Secname => print_result("Name", &self.account_name),
             FieldType::Pass => print_result("Pass", &self.password),
-            _ => return,
+            _ => (),
         }
     }
 
@@ -86,12 +86,10 @@ impl AccountObj {
     }
 
     fn get_json_str(&self) -> String {
-        let json = match serde_json::to_string_pretty(self) {
+        match serde_json::to_string_pretty(self) {
             Err(_) => "".to_string(),
             Ok(j) => j,
-        };
-
-        json
+        }
     }
 
     fn get_field_json_str(&self, field: FieldType) -> String {
@@ -121,7 +119,7 @@ impl APIObj {
             FieldType::Desc => print_result("Desc", &self.description),
             FieldType::User => print_result("User", &self.user_name),
             FieldType::Key => print_result("Key", &self.api_key),
-            _ => return,
+            _ => (),
         }
     }
 
@@ -131,16 +129,14 @@ impl APIObj {
             FieldType::Desc => self.description.clone(),
             FieldType::User => self.user_name.clone(),
             FieldType::Key => self.api_key.clone(),
-            _ => return "".to_string(),
+            _ => "".to_string(),
         }
     }
     fn get_json_str(&self) -> String {
-        let json = match serde_json::to_string_pretty(self) {
+        match serde_json::to_string_pretty(self) {
             Err(_) => "".to_string(),
             Ok(j) => j,
-        };
-
-        json
+        }
     }
 
     fn get_field_json_str(&self, field: FieldType) -> String {

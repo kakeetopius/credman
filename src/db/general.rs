@@ -7,7 +7,7 @@ use std::fs::exists;
 
 pub fn get_db_con(dbfile: &str) -> Result<Connection, CMError> {
     let mut is_new_db: bool = false;
-    let dbcon = match Connection::open_with_flags(&dbfile, OpenFlags::SQLITE_OPEN_READ_WRITE) {
+    let dbcon = match Connection::open_with_flags(dbfile, OpenFlags::SQLITE_OPEN_READ_WRITE) {
         Ok(con) => con,
         Err(err) => {
             is_new_db = true;
@@ -39,23 +39,24 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
 
 fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
     let master_pass = ioutils::get_terminal_input("Enter cman master password", false, true)?;
-    if master_pass == "" {
+    if master_pass.is_empty() {
         return Err(CustomError::new("Master password cannot be empty").into());
     }
-    let pragma_query = format!("PRAGMA cipher_log = 'off';");
+    let pragma_query = "PRAGMA cipher_log = 'off';".to_string();
     dbcon.execute_batch(&pragma_query)?;
 
     let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
     dbcon.execute_batch(&pragma_query)?;
 
     let test_query = "SELECT COUNT(*) FROM sqlite_master";
-    if let Err(err) = dbcon.execute_batch(&test_query) {
-        if let rusqlite::Error::SqliteFailure(e, _) = err
-            && e.code == ErrorCode::NotADatabase
-        {
-            return Err(CMError::Custom(CustomError::new(
-                "Could not decrypt database. Please check the password and try again.",
-            )));
+    if let Err(err) = dbcon.execute_batch(test_query) {
+        match err {
+            rusqlite::Error::SqliteFailure(e, _) if e.code == ErrorCode::NotADatabase => {
+                return Err(CMError::Custom(CustomError::new(
+                    "Could not decrypt database. Please check the password and try again.",
+                )));
+            }
+            _ => (),
         }
     }
 
@@ -85,7 +86,7 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
         true,
         true,
     )?;
-    if master_pass == "" {
+    if master_pass.is_empty() {
         return Err(CustomError::new("Master password cannot be empty").into());
     }
     let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
@@ -103,7 +104,7 @@ pub fn change_db_password(dbcon: &Connection) -> Result<(), CMError> {
         true,
         true,
     )?;
-    if master_pass == "" {
+    if master_pass.is_empty() {
         return Err(CustomError::new("Master password cannot be empty").into());
     }
     let pragma_query = format!("PRAGMA rekey = '{}';", &master_pass);

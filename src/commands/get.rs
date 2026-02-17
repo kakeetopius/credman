@@ -5,8 +5,8 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
     let secrets = match &args.secret {
         Some(s) => match sec_type {
-            SecretType::Login => get_accounts(&s, dbcon)?,
-            SecretType::Api => get_apikeys(&s, dbcon)?,
+            SecretType::Login => get_accounts(s, dbcon)?,
+            SecretType::Api => get_apikeys(s, dbcon)?,
         },
         None => match sec_type {
             SecretType::Login => {
@@ -26,7 +26,7 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
         },
     };
 
-    if secrets.len() < 1 {
+    if secrets.is_empty() {
         return Ok(());
     }
 
@@ -79,13 +79,13 @@ fn get_accounts(
     let mut errors: Vec<CMError> = Vec::new();
 
     for account in accounts {
-        let account = db::get_account_from_db(account, &dbcon);
+        let account = db::get_account_from_db(account, dbcon);
         match account {
             Ok(a) => account_objs.push(a),
             Err(e) => errors.push(e),
         }
     }
-    if errors.len() > 0 {
+    if !errors.is_empty() {
         for e in errors {
             eprintln!("{}", e);
         }
@@ -108,7 +108,7 @@ fn get_apikeys(
             Err(e) => errors.push(e),
         }
     }
-    if errors.len() > 0 {
+    if !errors.is_empty() {
         for e in errors {
             eprintln!("{}", e);
         }
@@ -119,7 +119,7 @@ fn get_apikeys(
 
 pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
-    if all_accounts.len() < 1 {
+    if all_accounts.is_empty() {
         return Err(CustomError::new(
             "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details.",
         ).into());
@@ -129,7 +129,7 @@ pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret,
 
 pub fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
-    if all_api_keys.len() < 1 {
+    if all_api_keys.is_empty() {
         return Err(CustomError::new(
             "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details.",
         ).into());
@@ -141,7 +141,7 @@ pub fn get_multiple_accounts_from_user(
     dbcon: &Connection,
 ) -> core::result::Result<Vec<Secret>, CMError> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
-    if all_accounts.len() < 1 {
+    if all_accounts.is_empty() {
         return Err(CustomError::new(
             "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details.",
         ).into());
@@ -154,7 +154,7 @@ pub fn get_multiple_apikeys_from_user(
     dbcon: &Connection,
 ) -> core::result::Result<Vec<Secret>, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
-    if all_api_keys.len() < 1 {
+    if all_api_keys.is_empty() {
         return Err(CustomError::new(
             "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details.",
         ).into());

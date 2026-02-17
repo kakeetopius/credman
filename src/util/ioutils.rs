@@ -82,12 +82,12 @@ pub fn print_result(field: &str, value: &str) {
 }
 
 pub fn set_terminal_settings(args: &CmanArgs) {
-    if let Commands::Get(getargs) = &args.command {
-        if getargs.quiet {
-            let guard = QUIET.lock().ok();
-            if let Some(mut guard) = guard {
-                *guard = true;
-            }
+    if let Commands::Get(getargs) = &args.command
+        && getargs.quiet
+    {
+        let guard = QUIET.lock().ok();
+        if let Some(mut guard) = guard {
+            *guard = true;
         }
     }
 }

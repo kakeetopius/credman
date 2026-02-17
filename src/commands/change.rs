@@ -2,17 +2,17 @@ use crate::commands::*;
 
 pub fn run_change(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
-    if let Some(s) = &args.secret {
-        if s == "master" {
-            db::change_db_password(dbcon)?;
-            println!("Master Password Changed Successfully");
-            return Ok(());
-        }
+    if let Some(s) = &args.secret
+        && s == "master"
+    {
+        db::change_db_password(dbcon)?;
+        println!("Master Password Changed Successfully");
+        return Ok(());
     }
 
     match sec_type {
-        SecretType::Login => change_acc_field(args, &dbcon)?,
-        SecretType::Api => change_api_field(args, &dbcon)?,
+        SecretType::Login => change_acc_field(args, dbcon)?,
+        SecretType::Api => change_api_field(args, dbcon)?,
     };
     Ok(())
 }
@@ -63,13 +63,12 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             if !opt {
                 return Ok(());
             }
-            let pass: String;
+
             if args.no_auto {
-                pass = get_terminal_input("Enter new password", true, true)?
+                get_terminal_input("Enter new password", true, true)?
             } else {
-                pass = passgen::get_random_pass(args.passlen)?;
+                passgen::get_random_pass(args.passlen)?
             }
-            pass
         }
         _ => {
             return Err(
