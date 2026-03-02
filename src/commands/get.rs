@@ -61,6 +61,11 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     }
 
     println!();
+    let default_field = if sec_type == SecretType::Login {
+        FieldType::Pass
+    } else {
+        FieldType::Key
+    };
     for secret in secrets {
         if let Some(fieldtype) = args.field {
             secret.print_field(fieldtype);
