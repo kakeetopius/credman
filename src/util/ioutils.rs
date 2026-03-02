@@ -8,12 +8,10 @@ use std::sync::Mutex;
 static QUIET: Mutex<bool> = Mutex::new(false);
 
 pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<String, CMError> {
-    let quiet = shouldbequiet();
-
     if private {
-        return get_private_input(prompt, confirm, quiet);
+        return get_private_input(prompt, confirm);
     }
-    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
+    let prompt = &format!("{}: ", prompt);
 
     let input = Text::new(prompt).prompt()?;
     Ok(input)
@@ -26,9 +24,7 @@ pub fn get_terminal_input_with_suggestions<T>(
 where
     T: Display,
 {
-    let quiet = shouldbequiet();
-
-    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
+    let prompt = &format!("{}: ", prompt);
 
     let option = Select::new(prompt, suggestions).prompt()?;
 
@@ -42,16 +38,14 @@ pub fn get_multiple_selections_from_terminal<T>(
 where
     T: Display,
 {
-    let quiet = shouldbequiet();
-
-    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
+    let prompt = &format!("{}: ", prompt);
 
     let options = MultiSelect::new(prompt, options).prompt()?;
     Ok(options)
 }
 
-fn get_private_input(prompt: &str, confirm: bool, quiet: bool) -> Result<String, CMError> {
-    let prompt = if !quiet { &format!("{}: ", prompt) } else { "" };
+fn get_private_input(prompt: &str, confirm: bool) -> Result<String, CMError> {
+    let prompt = &format!("{}: ", prompt);
 
     let mut password = Password::new(prompt);
     if !confirm {
@@ -63,12 +57,7 @@ fn get_private_input(prompt: &str, confirm: bool, quiet: bool) -> Result<String,
 }
 
 pub fn get_user_confirmation(message: &str) -> Result<bool, CMError> {
-    let quiet = shouldbequiet();
-    let prompt = if !quiet {
-        &format!("{}: ", message)
-    } else {
-        ""
-    };
+    let prompt = &format!("{}: ", message);
     let ans = Confirm::new(prompt).prompt()?;
     Ok(ans)
 }
@@ -78,7 +67,7 @@ pub fn print_result(field: &str, value: &str) {
     if !quiet {
         print!("{}:   ", field);
     }
-    print!("{}\n", value);
+    println!("{}", value);
 }
 
 pub fn set_terminal_settings(args: &CmanArgs) {

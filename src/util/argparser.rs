@@ -130,7 +130,7 @@ pub struct GetArgs {
     #[arg(short, long)]
     pub multiple: bool,
 
-    /// Do not print prompts or prefixes to stdout. Only the secret's retrieved details are printed.
+    /// Do not print prefixes to stdout. Only the secret's retrieved details are printed.
     #[arg(short, long)]
     pub quiet: bool,
 
