@@ -1,4 +1,5 @@
-use crate::util::argparser::{CmanArgs, Commands};
+use crate::objects::Secret;
+use crate::util::argparser::{CmanArgs, Commands, FieldType, GetArgs, SecretType};
 use crate::util::errors::CMError;
 
 use inquire::*;
@@ -68,6 +69,28 @@ pub fn print_result(field: &str, value: &str) {
         print!("{}:   ", field);
     }
     println!("{}", value);
+}
+
+pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) {
+    let sec_type = getargs.secret_type.unwrap_or(SecretType::Login);
+    let _default_field = if sec_type == SecretType::Login {
+        FieldType::Pass
+    } else {
+        FieldType::Key
+    };
+
+    let quiet = shouldbequiet();
+    if !quiet {
+        println!()
+    }
+
+    for secret in secrets {
+        if let Some(fieldtype) = getargs.field {
+            secret.print_field(fieldtype);
+            continue;
+        }
+        secret.print();
+    }
 }
 
 pub fn set_terminal_settings(args: &CmanArgs) {

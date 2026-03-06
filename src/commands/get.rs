@@ -1,4 +1,4 @@
-use crate::commands::*;
+use crate::{commands::*, util::ioutils};
 use serde_json;
 
 pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
@@ -60,14 +60,7 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
         return Ok(());
     }
 
-    println!();
-    for secret in secrets {
-        if let Some(fieldtype) = args.field {
-            secret.print_field(fieldtype);
-            continue;
-        }
-        secret.print();
-    }
+    ioutils::print_secrets(&secrets, args);
     Ok(())
 }
 
