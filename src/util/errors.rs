@@ -23,10 +23,12 @@ impl fmt::Display for CustomError {
 impl Error for CustomError {}
 
 /// CredMan Error
+#[derive(Debug)]
 pub enum CMError {
     RusqlilteError(rusqlite::Error),
     IOError(std::io::Error),
     InquireError(inquire::InquireError),
+    ClipboardError(arboard::Error),
     Custom(CustomError),
 }
 
@@ -37,6 +39,7 @@ impl fmt::Display for CMError {
             Self::IOError(err) => write!(f, "IO error: {}", err),
             Self::Custom(err) => write!(f, "Error: {}", err),
             Self::InquireError(err) => write!(f, "Error: {}", err),
+            Self::ClipboardError(err) => write!(f, "Error: {}", err),
         }
     }
 }
@@ -62,5 +65,11 @@ impl From<CustomError> for CMError {
 impl From<inquire::InquireError> for CMError {
     fn from(value: inquire::InquireError) -> Self {
         CMError::InquireError(value)
+    }
+}
+
+impl From<arboard::Error> for CMError {
+    fn from(value: arboard::Error) -> Self {
+        CMError::ClipboardError(value)
     }
 }
