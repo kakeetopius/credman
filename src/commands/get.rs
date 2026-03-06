@@ -64,9 +64,11 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     for secret in secrets {
         if let Some(fieldtype) = args.field {
             secret.print_field(fieldtype);
+            secret.send_field_to_clipboard(fieldtype)?;
             continue;
         }
         secret.print();
+        secret.send_field_to_clipboard(default_field)?;
     }
     Ok(())
 }

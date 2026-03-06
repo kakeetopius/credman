@@ -1,6 +1,8 @@
 use crate::util::argparser::FieldType;
+use crate::util::errors::CMError;
 use crate::util::ioutils::print_result;
 
+use arboard::{Clipboard, SetExtLinux};
 use serde::{Deserialize, Serialize};
 
 use std::fmt::Display;
@@ -102,6 +104,20 @@ impl AccountObj {
 
         json_str.to_string()
     }
+
+    fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+        let data = match field {
+            FieldType::User => &self.user_name,
+            FieldType::Secname => &self.account_name,
+            FieldType::Pass => &self.password,
+            _ => "",
+        };
+
+        let mut clipboard = Clipboard::new()?;
+
+        clipboard.set_text(data)?;
+        Ok(())
+    }
 }
 
 impl APIObj {
@@ -141,13 +157,31 @@ impl APIObj {
 
     fn get_field_json_str(&self, field: FieldType) -> String {
         let json_str = match field {
-            FieldType::Secname => serde_json::json!({"Name": &self.user_name}),
+            FieldType::Secname => serde_json::json!({"Name": &self.api_name}),
             FieldType::Desc => serde_json::json!({"Description": &self.description}),
             FieldType::User => serde_json::json!({"User": &self.user_name}),
             FieldType::Key => serde_json::json!({"Key": &self.api_key}),
             _ => return "".to_string(),
         };
         json_str.to_string()
+    }
+
+    fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+        let data = match field {
+            FieldType::Secname => &self.api_name,
+            FieldType::Desc => &self.description,
+            FieldType::User => &self.user_name,
+            FieldType::Key => &self.api_key,
+            _ => "",
+        };
+
+        let mut clipboard = Clipboard::new()?;
+
+        let mut setter = clipboard.set();
+        setter = setter.wait();
+
+        setter.text(data)?;
+        Ok(())
     }
 }
 
@@ -191,6 +225,13 @@ impl Secret {
         match self {
             Self::Account(acc) => acc.account_name.clone(),
             Self::API(api) => api.api_name.clone(),
+        }
+    }
+
+    pub fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+        match self {
+            Self::Account(acc) => acc.send_field_to_clipboard(field),
+            Self::API(api) => api.send_field_to_clipboard(field),
         }
     }
 }
