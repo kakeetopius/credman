@@ -102,7 +102,10 @@ Output as JSON:
 cman get github --json
 ```
 
-### List all secrets
+</details>
+
+<details>
+<summary>List all secrets</summary>
 
 List all login credentials:
 
