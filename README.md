@@ -46,7 +46,8 @@ Or set the `$CMAN_DBFILE` environment variable:
 export CMAN_DBFILE=/path/to/database.db
 ```
 
-### Add a secret
+<details>
+<summary>Add a secret</summary>
 
 Add a login credential with auto-generated password:
 
@@ -72,7 +73,99 @@ Specify password length:
 cman add github --len 32
 ```
 
-## Batch Operations
+</details>
+
+<details>
+<summary>Retrieve a secret</summary>
+
+Get all details for a credential:
+
+```bash
+cman get github
+```
+
+Get a specific field:
+
+```bash
+cman get github --field user
+```
+
+Get multiple secrets interactively:
+
+```bash
+cman get --multiple
+```
+
+Output as JSON:
+
+```bash
+cman get github --json
+```
+
+### List all secrets
+
+List all login credentials:
+
+```bash
+cman ls
+```
+
+List all API keys:
+
+```bash
+cman ls --type api
+```
+
+Output as JSON:
+
+```bash
+cman ls --json
+```
+
+</details>
+
+<details>
+<summary>Modify a secret</summary>
+
+Change a credential's password:
+
+```bash
+cman change github
+```
+
+Change a specific field:
+
+```bash
+cman change github --field user
+```
+
+Change the master password:
+
+```bash
+cman change master
+```
+
+</details>
+
+<details>
+<summary>Delete a secret</summary>
+
+Delete a single credential:
+
+```bash
+cman delete github
+```
+
+Delete multiple secrets interactively:
+
+```bash
+cman delete --multiple
+```
+
+</details>
+
+<details>
+<summary>Batch Operations</summary>
 
 Add multiple credentials from a file:
 
@@ -94,6 +187,8 @@ login,github,myusername,?
 login,gmail,myemail@gmail.com,?
 api,openai,user123,my api key,sk-1234567890abcdef
 ```
+
+</details>
 
 ## Commands
 
