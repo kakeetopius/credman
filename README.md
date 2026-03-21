@@ -20,7 +20,7 @@ A simple command-line tool to manage and securely store secrets like login crede
 Requires Rust 1.70+ and development headers for OpenSSL.
 
 ```bash
-git clone https://github.com/yourusername/credman.git
+git clone https://github.com/kakeetopius/credman.git
 cd credman
 cargo build --release
 sudo cp target/release/cman /usr/local/bin/
@@ -90,9 +90,11 @@ Get a specific field:
 cman get github --field user
 ```
 
-Get multiple secrets interactively:
+Get secrets interactively from a menu:
 
 ```bash
+cman get
+
 cman get --multiple
 ```
 
