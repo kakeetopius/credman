@@ -40,7 +40,7 @@ By default, the database is stored at `~/.creds.db`. You can specify a custom pa
 cman init --path /custom/path/to/database.db
 ```
 
-Or set the `$CMAN_DBFILE` environment variable:
+And then set the `$CMAN_DBFILE` environment variable so that it can be found later:
 
 ```bash
 export CMAN_DBFILE=/path/to/database.db
