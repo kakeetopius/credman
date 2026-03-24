@@ -221,7 +221,7 @@ api,openai,user123,my api key,sk-1234567890abcdef
 - Credentials are encrypted using SQLCipher with AES-256
 - Master password protects access to the database
 - No secrets are logged or written to temporary files
-- All operations are performed in-memory when possible
+- All operations are performed in-memory.
 
 ## Requirements
 
