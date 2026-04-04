@@ -1,11 +1,12 @@
 use crate::util::argparser::FieldType;
 use crate::util::errors::CMError;
 use crate::util::ioutils::print_result;
+use std::thread::sleep;
 
 use arboard::{Clipboard, SetExtLinux};
 use serde::{Deserialize, Serialize};
 
-use std::fmt::Display;
+use std::{fmt::Display, time};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Secret {
@@ -116,6 +117,8 @@ impl AccountObj {
         let mut clipboard = Clipboard::new()?;
 
         clipboard.set_text(data)?;
+        // to stop clipboard from being dropped early which causes an error on linux
+        sleep(time::Duration::from_millis(2));
         Ok(())
     }
 }
@@ -181,6 +184,9 @@ impl APIObj {
         setter = setter.wait();
 
         setter.text(data)?;
+
+        // to stop clipboard from being dropped early which causes an error on linux
+        sleep(time::Duration::from_secs(5));
         Ok(())
     }
 }
