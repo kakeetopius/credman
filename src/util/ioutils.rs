@@ -71,9 +71,9 @@ pub fn print_result(field: &str, value: &str) {
     println!("{}", value);
 }
 
-pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) {
+pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) -> Result<(), CMError> {
     let sec_type = getargs.secret_type.unwrap_or(SecretType::Login);
-    let _default_field = if sec_type == SecretType::Login {
+    let default_field = if sec_type == SecretType::Login {
         FieldType::Pass
     } else {
         FieldType::Key
@@ -91,6 +91,13 @@ pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) {
         }
         secret.print();
     }
+
+    if secrets.len() == 1 {
+        // send the password or api key to clipboard if only one was requested
+        secrets[0].send_field_to_clipboard(default_field)?;
+    }
+
+    Ok(())
 }
 
 pub fn set_terminal_settings(args: &CmanArgs) {

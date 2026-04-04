@@ -60,7 +60,7 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
         return Ok(());
     }
 
-    ioutils::print_secrets(&secrets, args);
+    ioutils::print_secrets(&secrets, args)?;
     Ok(())
 }
 
