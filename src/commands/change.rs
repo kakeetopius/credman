@@ -103,7 +103,7 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
         FieldType::Secname => {
             let input = get_terminal_input("Enter new name for the api key", false, false)?;
             let exists = db::check_apikey_exists(&input, dbcon)?;
-            if !exists {
+            if exists {
                 return Err(CustomError::new(&format!(
                     "API with name {} already exists",
                     sec_name
