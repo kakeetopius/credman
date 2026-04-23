@@ -22,8 +22,8 @@ Requires Rust 1.70+ and development headers for OpenSSL.
 ```bash
 git clone https://github.com/kakeetopius/credman.git
 cd credman
-cargo build --release
-sudo cp target/release/cman /usr/local/bin/
+
+cargo install --path .
 ```
 
 ## Quick Start
