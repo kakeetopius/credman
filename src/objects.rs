@@ -3,7 +3,7 @@ use crate::util::errors::CMError;
 use crate::util::ioutils::print_result;
 use std::thread::sleep;
 
-use arboard::{Clipboard, SetExtLinux};
+use arboard::Clipboard;
 use serde::{Deserialize, Serialize};
 
 use std::{fmt::Display, time};
@@ -180,13 +180,9 @@ impl APIObj {
 
         let mut clipboard = Clipboard::new()?;
 
-        let mut setter = clipboard.set();
-        setter = setter.wait();
-
-        setter.text(data)?;
-
+        clipboard.set_text(data)?;
         // to stop clipboard from being dropped early which causes an error on linux
-        sleep(time::Duration::from_secs(5));
+        sleep(time::Duration::from_millis(2));
         Ok(())
     }
 }
