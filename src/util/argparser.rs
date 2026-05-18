@@ -43,6 +43,12 @@ pub enum Commands {
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Ls(LsArgs),
 
+    /// Pull the credential database from a remote url.
+    #[command(
+        after_long_help = "The url can be provided via the environment variable CMAN_DBURL or via the --url flag."
+    )]
+    Pull(PullArgs),
+
     /// Generate shell completions
     #[command(hide = true)]
     Completions {
@@ -163,6 +169,18 @@ pub struct LsArgs {
     /// Print the results returned in json form.
     #[arg(short, long)]
     pub json: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct PullArgs {
+    /// The remote database url.
+    #[arg(short = 'u', long = "url")]
+    pub url: Option<String>,
+
+    /// The file to write the remote database to. Defaults to CMAN_DBFILE environment variable or
+    /// the $HOME/.creds.db file if the environment variable is missing.
+    #[arg(short, long)]
+    pub out: Option<String>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]

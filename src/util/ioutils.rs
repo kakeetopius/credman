@@ -5,6 +5,7 @@ use crate::util::errors::CMError;
 use inquire::*;
 use std::fmt::Display;
 use std::sync::Mutex;
+use std::time::Duration;
 
 static QUIET: Mutex<bool> = Mutex::new(false);
 
@@ -109,6 +110,18 @@ pub fn set_terminal_settings(args: &CmanArgs) {
             *guard = true;
         }
     }
+}
+
+pub fn new_spinner(msg: String) -> indicatif::ProgressBar {
+    let spinner = indicatif::ProgressBar::new_spinner().with_message(msg);
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
+    let template = indicatif::ProgressStyle::with_template("{spinner:.cyan.bold} {msg}")
+        .unwrap_or(indicatif::ProgressStyle::default_spinner());
+
+    spinner.set_style(template);
+
+    spinner
 }
 
 fn shouldbequiet() -> bool {
