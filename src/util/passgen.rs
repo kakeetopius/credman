@@ -25,15 +25,15 @@ pub fn get_random_pass(passlen: Option<usize>) -> Result<String, CMError> {
     let mut rng = match ChaCha20Rng::try_from_os_rng() {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("{}", e);
-            return Err(CustomError::new("Error generating Password").into());
+            return Err(CustomError::new(&format!("Error generating Password: {}", e)).into());
         }
     };
     rng.fill_bytes(&mut index_buff);
 
-    for i in 0..passlen {
-        let mut index: usize = index_buff[i] as usize;
-        index = index % chars_size;
+    for i in index_buff.iter() {
+        let mut index: usize = *i as usize;
+
+        index %= chars_size;
         let passchar = &chars_arr[index];
 
         pass.push(*passchar);

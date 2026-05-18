@@ -123,10 +123,9 @@ pub fn get_all_accounts_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusql
     })?;
 
     let mut results: Vec<Secret> = Vec::new();
-    for row in rows {
-        if let Ok(result) = row {
-            results.push(result.into());
-        }
+
+    for row in rows.flatten() {
+        results.push(row.into())
     }
     Ok(results)
 }
@@ -144,10 +143,8 @@ pub fn get_all_apikeys_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqli
     })?;
 
     let mut results: Vec<Secret> = Vec::new();
-    for row in rows {
-        if let Ok(result) = row {
-            results.push(result.into());
-        }
+    for result in rows.flatten() {
+        results.push(result.into());
     }
     Ok(results)
 }
