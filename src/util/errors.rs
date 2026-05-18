@@ -29,6 +29,7 @@ pub enum CMError {
     IOError(std::io::Error),
     InquireError(inquire::InquireError),
     ClipboardError(arboard::Error),
+    ReqwestError(reqwest::Error),
     Custom(CustomError),
 }
 
@@ -39,6 +40,7 @@ impl fmt::Display for CMError {
             Self::IOError(err) => write!(f, "IO error: {}", err),
             Self::Custom(err) => write!(f, "Error: {}", err),
             Self::InquireError(err) => write!(f, "Error: {}", err),
+            Self::ReqwestError(err) => write!(f, "Error: {}", err),
             Self::ClipboardError(err) => write!(f, "Error: {}", err),
         }
     }
@@ -71,5 +73,11 @@ impl From<inquire::InquireError> for CMError {
 impl From<arboard::Error> for CMError {
     fn from(value: arboard::Error) -> Self {
         CMError::ClipboardError(value)
+    }
+}
+
+impl From<reqwest::Error> for CMError {
+    fn from(value: reqwest::Error) -> Self {
+        CMError::ReqwestError(value)
     }
 }
