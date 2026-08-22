@@ -167,6 +167,10 @@ pub struct LsArgs {
     #[arg(short, long)]
     /// Print json ouput as pretty-formatted JSON
     pub pretty: bool,
+
+    #[arg(short, long)]
+    /// Get all secrets of all types
+    pub all: bool,
 }
 
 #[derive(Args, Debug)]

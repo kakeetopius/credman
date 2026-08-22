@@ -56,7 +56,7 @@ fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
                     "Could not decrypt database. Please check the password and try again.",
                 )));
             }
-            _ => (),
+            _ => return Err(CMError::RusqlilteError(err)),
         }
     }
 
