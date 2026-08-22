@@ -14,20 +14,11 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
     let accounts = match &args.secret {
         Some(accounts) => accounts.clone(),
         None => {
-            if args.multiple {
-                let selections: Vec<String> = get::get_multiple_accounts_from_user(dbcon)?
-                    .iter()
-                    .map(|secret| secret.get_name())
-                    .collect();
-                selections
-            } else {
-                let acc_obj = get_account_from_user(dbcon)?;
-                if let Secret::Account(acc) = acc_obj {
-                    vec![acc.account_name.clone()]
-                } else {
-                    vec!["".to_string()]
-                }
-            }
+            let selections: Vec<String> = get::get_accounts_from_user(dbcon)?
+                .iter()
+                .map(|secret| secret.get_name())
+                .collect();
+            selections
         }
     };
 
@@ -66,21 +57,10 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
 fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
     let apikeys = match &args.secret {
         Some(apikeys) => apikeys.clone(),
-        None => {
-            if args.multiple {
-                get::get_multiple_apikeys_from_user(dbcon)?
-                    .iter()
-                    .map(|secret| secret.get_name())
-                    .collect()
-            } else {
-                let api_obj = get_api_from_user(dbcon)?;
-                if let Secret::API(api) = api_obj {
-                    vec![api.api_name.clone()]
-                } else {
-                    vec!["".to_string()]
-                }
-            }
-        }
+        None => get::get_apikeys_from_user(dbcon)?
+            .iter()
+            .map(|secret| secret.get_name())
+            .collect(),
     };
     let mut error_str = String::new();
     let mut successfull: Vec<String> = Vec::new();

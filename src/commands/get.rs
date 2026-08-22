@@ -9,20 +9,8 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
             SecretType::Api => get_apikeys(s, dbcon)?,
         },
         None => match sec_type {
-            SecretType::Login => {
-                if args.multiple {
-                    get_multiple_accounts_from_user(dbcon)?
-                } else {
-                    vec![get_account_from_user(dbcon)?]
-                }
-            }
-            SecretType::Api => {
-                if args.multiple {
-                    get_multiple_apikeys_from_user(dbcon)?
-                } else {
-                    vec![get_api_from_user(dbcon)?]
-                }
-            }
+            SecretType::Login => get_accounts_from_user(dbcon)?,
+            SecretType::Api => get_apikeys_from_user(dbcon)?,
         },
     };
 
@@ -33,28 +21,22 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     // if user requires json we combine everything in a single json object.
     if args.json {
         if let Some(fieldtype) = args.field {
-            if secrets.len() == 1 {
-                println!("{}", secrets[0].get_field_json_str(fieldtype));
-                return Ok(());
-            }
-
             let secrets_fields: Vec<String> =
                 secrets.iter().map(|s| s.get_field(fieldtype)).collect();
-            let json = match serde_json::to_string_pretty(&secrets_fields) {
-                Err(_) => "".to_string(),
-                Ok(j) => j,
+
+            let json = if args.pretty {
+                serde_json::to_string_pretty(&secrets_fields).unwrap_or("".to_string())
+            } else {
+                serde_json::to_string(&secrets_fields).unwrap_or("".to_string())
             };
             println!("{}", json);
             return Ok(());
         }
 
-        if secrets.len() == 1 {
-            println!("{}", secrets[0].get_json_str());
-            return Ok(());
-        }
-        let json = match serde_json::to_string_pretty(&secrets) {
-            Err(_) => "".to_string(),
-            Ok(j) => j,
+        let json = if args.pretty {
+            serde_json::to_string_pretty(&secrets).unwrap_or("".to_string())
+        } else {
+            serde_json::to_string(&secrets).unwrap_or("".to_string())
         };
         println!("{}", json);
         return Ok(());
@@ -130,9 +112,7 @@ pub fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CME
     get_terminal_input_with_suggestions("Enter the api key name", all_api_keys)
 }
 
-pub fn get_multiple_accounts_from_user(
-    dbcon: &Connection,
-) -> core::result::Result<Vec<Secret>, CMError> {
+pub fn get_accounts_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
     if all_accounts.is_empty() {
         return Err(CustomError::new(
@@ -143,9 +123,7 @@ pub fn get_multiple_accounts_from_user(
     get_multiple_selections_from_terminal("Select accounts", all_accounts)
 }
 
-pub fn get_multiple_apikeys_from_user(
-    dbcon: &Connection,
-) -> core::result::Result<Vec<Secret>, CMError> {
+pub fn get_apikeys_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
         return Err(CustomError::new(

@@ -143,7 +143,7 @@ pub fn get_all_apikeys_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqli
     })?;
 
     let mut results: Vec<Secret> = Vec::new();
-    for result in rows.flatten() {
+    for result in rows.into_iter().flatten() {
         results.push(result.into());
     }
     Ok(results)

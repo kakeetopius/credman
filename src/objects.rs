@@ -9,8 +9,11 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Display, time};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum Secret {
+    #[serde(rename = "login")]
     Account(AccountObj),
+    #[serde(rename = "api_key")]
     API(APIObj),
 }
 
@@ -118,7 +121,7 @@ impl AccountObj {
 
         clipboard.set_text(data)?;
         // to stop clipboard from being dropped early which causes an error on linux
-        sleep(time::Duration::from_millis(2));
+        sleep(time::Duration::from_millis(5));
         Ok(())
     }
 }
@@ -182,7 +185,7 @@ impl APIObj {
 
         clipboard.set_text(data)?;
         // to stop clipboard from being dropped early which causes an error on linux
-        sleep(time::Duration::from_millis(2));
+        sleep(time::Duration::from_millis(5));
         Ok(())
     }
 }

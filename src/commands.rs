@@ -20,13 +20,13 @@ use std::env::var_os;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use get::get_account_from_user;
+use get::get_api_from_user;
+
 mod add;
 mod change;
 mod delete;
 mod get;
-
-use get::get_account_from_user;
-use get::get_api_from_user;
 
 type Result = std::result::Result<(), CMError>;
 
@@ -34,23 +34,22 @@ const DB_ENV_VAR: &str = "CMAN_DBFILE";
 const REMOTE_DB_ENV_VAR: &str = "CMAN_DBURL";
 
 pub fn run_command(args: &CmanArgs) -> Result {
-    if let Commands::Init(args) = &args.command {
-        return run_init(args);
-    }
-    if let Commands::Completions { shell } = &args.command {
-        let mut cmd = CmanArgs::command();
-        generate(*shell, &mut cmd, "cman", &mut std::io::stdout());
-        return Ok(());
-    }
-    if let Commands::Pull(args) = &args.command {
-        return run_pull(args);
-    }
-
-    let dbpath = match get_db_path_from_env() {
-        Some(p) => p,
-        None => return Err(CustomError::new("Could not get Database file path").into()),
+    let dbcon = match &args.command {
+        Commands::Init(args) => return run_init(args),
+        Commands::Pull(args) => return run_pull(args),
+        Commands::Completions { shell } => {
+            let mut cmd = CmanArgs::command();
+            generate(*shell, &mut cmd, "cman", &mut std::io::stdout());
+            return Ok(());
+        }
+        _ => {
+            let dbpath = match get_db_path_from_env() {
+                Some(p) => p,
+                None => return Err(CustomError::new("Could not get Database file path").into()),
+            };
+            db::get_db_con(&dbpath)?
+        }
     };
-    let dbcon = db::get_db_con(&dbpath)?;
 
     match &args.command {
         Commands::Add(a) => add::run_add(a, &dbcon),
@@ -88,8 +87,12 @@ fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {
     }?;
 
     if args.json {
-        let json_str = serde_json::to_string_pretty(&results).unwrap_or("".to_string());
-        println!("{}", json_str);
+        let json = if args.pretty {
+            serde_json::to_string_pretty(&results).unwrap_or("".to_string())
+        } else {
+            serde_json::to_string(&results).unwrap_or("".to_string())
+        };
+        println!("{}", json);
         return Ok(());
     }
 
@@ -113,19 +116,19 @@ fn run_pull(args: &PullArgs) -> Result {
         }
     };
 
-    let mut noout = false;
+    let mut no_out_file_given = false;
     let dbpath = match &args.out {
         Some(p) => p.clone(),
         None => match get_db_path_from_env() {
             Some(p) => {
-                noout = true;
+                no_out_file_given = true;
                 p
             }
             None => return Err(CustomError::new("Could not get Database file path").into()),
         },
     };
 
-    if noout {
+    if no_out_file_given {
         let opt = get_user_confirmation(&format!(
             "Are you sure you want to replace the credential database at {}",
             dbpath

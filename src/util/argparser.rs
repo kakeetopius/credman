@@ -131,11 +131,6 @@ pub struct GetArgs {
     #[arg(value_enum, short, long = "field")]
     pub field: Option<FieldType>,
 
-    /// Accept mutliple inputs from the interactive menu provided only if no secret name is given
-    /// as part of the command line arguments.
-    #[arg(short, long)]
-    pub multiple: bool,
-
     /// Do not print prefixes to stdout. Only the secret's retrieved details are printed.
     #[arg(short, long)]
     pub quiet: bool,
@@ -143,6 +138,10 @@ pub struct GetArgs {
     /// Print the results returned in json form.
     #[arg(short, long)]
     pub json: bool,
+
+    #[arg(short, long)]
+    /// Print json ouput as pretty-formatted JSON
+    pub pretty: bool,
 }
 
 #[derive(Args, Debug)]
@@ -153,11 +152,6 @@ pub struct DeleteArgs {
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
-
-    /// Accept mutliple inputs from the interactive menu provided only if no secret name is given
-    /// as part of the command line arguments..
-    #[arg(short, long)]
-    pub multiple: bool,
 }
 
 #[derive(Args, Debug)]
@@ -169,6 +163,10 @@ pub struct LsArgs {
     /// Print the results returned in json form.
     #[arg(short, long)]
     pub json: bool,
+
+    #[arg(short, long)]
+    /// Print json ouput as pretty-formatted JSON
+    pub pretty: bool,
 }
 
 #[derive(Args, Debug)]
