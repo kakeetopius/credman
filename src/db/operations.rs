@@ -1,3 +1,4 @@
+use crate::cman_error;
 use crate::objects::{APIObj, AccountObj, Secret};
 use crate::util::argparser::FieldType;
 use crate::util::errors::{CMError, CustomError};
@@ -11,22 +12,14 @@ pub fn check_account_exists(
     let query = "SELECT EXISTS(SELECT 1 FROM account WHERE acc_name = ?1);";
 
     let result = dbcon.query_row(query, (account_name,), |row| row.get::<_, i32>(0))?;
-    if result == 0 {
-        return Ok(false);
-    }
-
-    Ok(true)
+    Ok(result != 0)
 }
 
 pub fn check_apikey_exists(apikey_name: &str, dbcon: &Connection) -> Result<bool, rusqlite::Error> {
     let query = "SELECT EXISTS(SELECT 1 FROM api_keys WHERE api_name = ?1);";
 
     let result = dbcon.query_row(query, (apikey_name,), |row| row.get::<_, i32>(0))?;
-    if result == 0 {
-        return Ok(false);
-    }
-
-    Ok(true)
+    Ok(result != 0)
 }
 
 pub fn add_account_to_db(
@@ -87,7 +80,7 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
         }
         .into())
     } else {
-        Err(CustomError::new(&format!("Account {} not found", account_name)).into())
+        Err(cman_error!(&format!("Account {} not found", account_name)))
     }
 }
 
@@ -107,7 +100,7 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
         }
         .into())
     } else {
-        Err(CustomError::new(&format!("API Key {} not found", apikey_name)).into())
+        Err(cman_error!(&format!("API Key {} not found", apikey_name)))
     }
 }
 
@@ -160,13 +153,16 @@ pub fn change_db_account_field(
         FieldType::Secname => "acc_name",
         FieldType::Pass => "password",
         _ => {
-            return Err(
-                CustomError::new("The given field is invalid for a login credential").into(),
-            );
+            return Err(cman_error!(
+                "The given field is invalid for a login credential"
+            ));
         }
     };
 
-    let query = format! { "UPDATE account SET {} = ?1 WHERE acc_name = ?2;", field_to_change};
+    let query = format!(
+        "UPDATE account SET {} = ?1 WHERE acc_name = ?2;",
+        field_to_change
+    );
     let mut stmt = dbcon.prepare(&query)?;
     let affected_rows = stmt.execute([new_value, account_name])?;
     Ok(affected_rows)
@@ -184,7 +180,7 @@ pub fn change_db_apikey_field(
         FieldType::Desc => "description",
         FieldType::Key => "api_key",
         _ => {
-            return Err(CustomError::new("The given field is invalid for an api key.").into());
+            return Err(cman_error!("The given field is invalid for an api key."));
         }
     };
 

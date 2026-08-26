@@ -95,9 +95,9 @@ fn get_apikeys(
 pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
     if all_accounts.is_empty() {
-        return Err(CustomError::new(
-            "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details.",
-        ).into());
+        return Err(cman_error!(
+            "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details."
+        ));
     }
     get_terminal_input_with_suggestions("Enter the account name", all_accounts)
 }
@@ -105,9 +105,9 @@ pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret,
 pub fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
-        return Err(CustomError::new(
-            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details.",
-        ).into());
+        return Err(cman_error!(
+            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
+        ));
     }
     get_terminal_input_with_suggestions("Enter the api key name", all_api_keys)
 }
@@ -115,9 +115,9 @@ pub fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CME
 pub fn get_accounts_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
     if all_accounts.is_empty() {
-        return Err(CustomError::new(
-            "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details.",
-        ).into());
+        return Err(cman_error!(
+            "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details."
+        ));
     }
 
     get_multiple_selections_from_terminal("Select accounts", all_accounts)
@@ -126,9 +126,9 @@ pub fn get_accounts_from_user(dbcon: &Connection) -> core::result::Result<Vec<Se
 pub fn get_apikeys_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
-        return Err(CustomError::new(
-            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details.",
-        ).into());
+        return Err(cman_error!(
+            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
+        ));
     }
     get_multiple_selections_from_terminal("Select API Keys", all_api_keys)
 }

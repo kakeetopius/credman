@@ -22,6 +22,13 @@ impl fmt::Display for CustomError {
 
 impl Error for CustomError {}
 
+#[macro_export]
+macro_rules! cman_error {
+    ($x:expr) => {
+        CMError::Custom(CustomError::new($x))
+    };
+}
+
 /// CredMan Error
 #[derive(Debug)]
 pub enum CMError {

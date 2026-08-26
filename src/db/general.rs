@@ -1,3 +1,4 @@
+use crate::cman_error;
 use crate::util::errors::{CMError, CustomError};
 use crate::util::ioutils;
 
@@ -40,21 +41,21 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
 fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
     let master_pass = ioutils::get_terminal_input("Enter cman master password", false, true)?;
     if master_pass.is_empty() {
-        return Err(CustomError::new("Master password cannot be empty").into());
+        return Err(cman_error!("Master password cannot be empty"));
     }
     let pragma_query = "PRAGMA cipher_log = 'off';".to_string();
     dbcon.execute_batch(&pragma_query)?;
 
-    let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
+    let pragma_query = format!("PRAGMA key = '{}';", master_pass);
     dbcon.execute_batch(&pragma_query)?;
 
     let test_query = "SELECT COUNT(*) FROM sqlite_master";
     if let Err(err) = dbcon.execute_batch(test_query) {
         match err {
             rusqlite::Error::SqliteFailure(e, _) if e.code == ErrorCode::NotADatabase => {
-                return Err(CMError::Custom(CustomError::new(
-                    "Could not decrypt database. Please check the password and try again.",
-                )));
+                return Err(cman_error!(
+                    "Could not decrypt database. Please check the password and try again."
+                ));
             }
             _ => return Err(CMError::RusqlilteError(err)),
         }
@@ -65,7 +66,10 @@ fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
 
 pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
     if let Ok(true) = exists(path) {
-        return Err(CustomError::new(&format!("File Already Exists at path: {}", path)).into());
+        return Err(cman_error!(&format!(
+            "File Already Exists at path: {}",
+            path
+        )));
     }
     let create_query = "CREATE TABLE account (\
 	 acc_id INTEGER PRIMARY KEY AUTOINCREMENT,\
@@ -87,9 +91,9 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
         true,
     )?;
     if master_pass.is_empty() {
-        return Err(CustomError::new("Master password cannot be empty").into());
+        return Err(cman_error!("Master password cannot be empty"));
     }
-    let pragma_query = format!("PRAGMA key = '{}';", &master_pass);
+    let pragma_query = format!("PRAGMA key = '{}';", master_pass);
     let dbcon = Connection::open(path)?;
 
     dbcon.execute_batch(&pragma_query)?;
@@ -105,9 +109,9 @@ pub fn change_db_password(dbcon: &Connection) -> Result<(), CMError> {
         true,
     )?;
     if master_pass.is_empty() {
-        return Err(CustomError::new("Master password cannot be empty").into());
+        return Err(cman_error!("Master password cannot be empty"));
     }
-    let pragma_query = format!("PRAGMA rekey = '{}';", &master_pass);
+    let pragma_query = format!("PRAGMA rekey = '{}';", master_pass);
 
     dbcon.execute_batch(&pragma_query)?;
     Ok(())

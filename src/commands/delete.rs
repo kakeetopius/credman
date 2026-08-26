@@ -49,7 +49,7 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
         println!();
     }
     if !error_str.is_empty() {
-        return Err(CustomError::new(&error_str).into());
+        return Err(cman_error!(&error_str));
     }
     Ok(())
 }
@@ -89,7 +89,7 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         println!();
     }
     if !error_str.is_empty() {
-        return Err(CustomError::new(&error_str).into());
+        return Err(cman_error!(&error_str));
     }
     Ok(())
 }

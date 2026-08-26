@@ -1,3 +1,4 @@
+use crate::cman_error;
 use crate::db;
 use crate::objects::{APIObj, AccountObj, Secret};
 use crate::util::argparser::{
@@ -34,7 +35,7 @@ const DB_ENV_VAR: &str = "CMAN_DBFILE";
 const REMOTE_DB_ENV_VAR: &str = "CMAN_DBURL";
 
 pub fn run_command(args: &CmanArgs) -> Result {
-    let dbcon = match &args.command {
+    match &args.command {
         Commands::Init(args) => return run_init(args),
         Commands::Pull(args) => return run_pull(args),
         Commands::Completions { shell } => {
@@ -42,13 +43,15 @@ pub fn run_command(args: &CmanArgs) -> Result {
             generate(*shell, &mut cmd, "cman", &mut std::io::stdout());
             return Ok(());
         }
-        _ => {
-            let dbpath = match get_db_path_from_env() {
-                Some(p) => p,
-                None => return Err(CustomError::new("Could not get Database file path").into()),
-            };
-            db::get_db_con(&dbpath)?
-        }
+        _ => {}
+    }
+
+    let dbcon = {
+        let dbpath = match get_db_path_from_env() {
+            Some(p) => p,
+            None => return Err(cman_error!("Could not get Database file path")),
+        };
+        db::get_db_con(&dbpath)?
     };
 
     match &args.command {
@@ -66,10 +69,7 @@ fn run_init(args: &InitArgs) -> Result {
         Some(p) => p.clone(),
         None => match get_db_path_from_env() {
             None => {
-                return Err(CustomError::new(
-                    "Could not get Database path. Try passing --path argument.",
-                )
-                .into());
+                return Err(cman_error!("Could not get Database file path"));
             }
             Some(p) => p,
         },
@@ -118,7 +118,10 @@ fn run_pull(args: &PullArgs) -> Result {
             match env_url {
                 Some(u) => u,
                 None => {
-                    return Err(CustomError::new(&format!("Could not determine remote url to use. Either provide it via the --url flag or set it using the {} environmnet variable.", REMOTE_DB_ENV_VAR)).into());
+                    return Err(cman_error!(&format!(
+                        "Could not determine remote url to use. Either provide it via the --url flag or set it using the {} environmnet variable.",
+                        REMOTE_DB_ENV_VAR
+                    )));
                 }
             }
         }
@@ -132,7 +135,9 @@ fn run_pull(args: &PullArgs) -> Result {
                 no_out_file_given = true;
                 p
             }
-            None => return Err(CustomError::new("Could not get Database file path").into()),
+            None => {
+                return Err(cman_error!("Could not get Database file path"));
+            }
         },
     };
 
