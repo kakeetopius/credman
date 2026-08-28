@@ -1,5 +1,6 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
+use std::fmt::Display;
 
 /// A simple tool to manage and securely store secrets like login credentials and API keys locally.
 #[derive(Parser, Debug)]
@@ -50,7 +51,6 @@ pub enum Commands {
     Pull(PullArgs),
 
     /// Generate shell completions
-    #[command(hide = true)]
     Completions {
         #[arg(value_enum)]
         shell: Shell,
@@ -210,4 +210,29 @@ pub enum FieldType {
 
     /// The API Key. (API ONLY)
     Key,
+}
+
+impl Display for SecretType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::Login => "login",
+            Self::Api => "api_key",
+        };
+
+        write!(f, "{}", str)
+    }
+}
+
+impl Display for FieldType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::User => "user_name",
+            Self::Secname => "secret_name",
+            Self::Pass => "password",
+            Self::Desc => "description",
+            Self::Key => "api_key",
+        };
+
+        write!(f, "{}", str)
+    }
 }

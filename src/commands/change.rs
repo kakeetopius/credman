@@ -32,7 +32,10 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
 
     let exists = db::check_account_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(cman_error!(&format!("Account {} does not exist", sec_name)));
+        return Err(cman_error!(&format!(
+            "Account '{}' does not exist",
+            sec_name
+        )));
     }
     let fieldtype = args.field.unwrap_or(FieldType::Pass);
     let new_value = match fieldtype {
@@ -43,7 +46,7 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             let exists = db::check_account_exists(&input, dbcon)?;
             if exists {
                 return Err(cman_error!(&format!(
-                    "Account with name {} already exists",
+                    "Account with name '{}' already exists",
                     input
                 )));
             }
@@ -69,9 +72,10 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             }
         }
         _ => {
-            return Err(cman_error!(
-                "The given field is invalid for a login credential"
-            ));
+            return Err(cman_error!(&format!(
+                "The field '{}' is invalid for a login credential",
+                fieldtype
+            )));
         }
     };
 
@@ -94,7 +98,7 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     };
     let exists = db::check_apikey_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(cman_error!(&format!("API {} does not exist", sec_name)));
+        return Err(cman_error!(&format!("API '{}' does not exist", sec_name)));
     }
     let fieldtype = args.field.unwrap_or(FieldType::Key);
     let new_value = match fieldtype {
@@ -103,7 +107,7 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             let exists = db::check_apikey_exists(&input, dbcon)?;
             if exists {
                 return Err(cman_error!(&format!(
-                    "API with name {} already exists",
+                    "API with name '{}' already exists",
                     sec_name
                 )));
             }
@@ -119,7 +123,12 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
         }
         FieldType::User => get_terminal_input("Enter new user name", false, false)?,
         FieldType::Key => get_terminal_input("Enter new API key", false, false)?,
-        _ => return Err(cman_error!("The given field is invalid for an API key")),
+        _ => {
+            return Err(cman_error!(&format!(
+                "The '{}' field is invalid for an API key",
+                fieldtype
+            )));
+        }
     };
 
     db::change_db_apikey_field(&sec_name, fieldtype, &new_value, dbcon)?;

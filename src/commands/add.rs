@@ -22,7 +22,7 @@ pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
 fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Connection) -> Result {
     let exists = db::check_account_exists(name, dbcon)?;
     if exists {
-        return Err(cman_error!(&format!("Account {} already exists", name)));
+        return Err(cman_error!(&format!("Account '{}' already exists", name)));
     }
     let user_name = get_terminal_input("Enter username for the account", false, false)?;
 
@@ -46,7 +46,7 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
 fn add_new_api(name: &str, dbcon: &Connection) -> Result {
     let exists = db::check_apikey_exists(name, dbcon)?;
     if exists {
-        return Err(cman_error!(&format!("API Key {} already exists", name)));
+        return Err(cman_error!(&format!("API Key '{}' already exists", name)));
     }
     let user_name = get_terminal_input(
         "Enter username for the account associated with API Key (if any)",
@@ -139,7 +139,7 @@ fn add_acc_from_file_line(
     let exists = db::check_account_exists(account_name, dbcon)?;
     if exists {
         return Err(cman_error!(&format!(
-            "Line {}: Account {} already exists",
+            "Line {}: Account '{}' already exists",
             lineno, account_name
         )));
     } else if account_name == "master" {
@@ -187,7 +187,7 @@ fn add_api_from_file_line(
     let exists = db::check_apikey_exists(fields[1], dbcon)?;
     if exists {
         return Err(cman_error!(&format!(
-            "Line {}: API Key {} already exists",
+            "Line {}: API Key '{}' already exists",
             lineno, api_name
         )));
     } else if api_name == "master" {

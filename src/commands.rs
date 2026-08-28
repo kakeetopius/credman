@@ -20,6 +20,7 @@ use std::env::home_dir;
 use std::env::var_os;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 
 use get::get_account_from_user;
 use get::get_api_from_user;
@@ -49,7 +50,12 @@ pub fn run_command(args: &CmanArgs) -> Result {
     let dbcon = {
         let dbpath = match get_db_path_from_env() {
             Some(p) => p,
-            None => return Err(cman_error!("Could not get Database file path")),
+            None => {
+                return Err(cman_error!(&format!(
+                    "Could not get Database file path. Try setting the {} environment variable.",
+                    DB_ENV_VAR
+                )));
+            }
         };
         db::get_db_con(&dbpath)?
     };
@@ -69,7 +75,10 @@ fn run_init(args: &InitArgs) -> Result {
         Some(p) => p.clone(),
         None => match get_db_path_from_env() {
             None => {
-                return Err(cman_error!("Could not get Database file path"));
+                return Err(cman_error!(&format!(
+                    "Could not get Database file path. Try setting the {} environment variable.",
+                    DB_ENV_VAR
+                )));
             }
             Some(p) => p,
         },
@@ -127,21 +136,20 @@ fn run_pull(args: &PullArgs) -> Result {
         }
     };
 
-    let mut no_out_file_given = false;
     let dbpath = match &args.out {
         Some(p) => p.clone(),
         None => match get_db_path_from_env() {
-            Some(p) => {
-                no_out_file_given = true;
-                p
-            }
+            Some(p) => p,
             None => {
-                return Err(cman_error!("Could not get Database file path"));
+                return Err(cman_error!(&format!(
+                    "Could not determine where to save the database. Try setting the {} environmnet variable or pass the file path with the --out flag.",
+                    DB_ENV_VAR
+                )));
             }
         },
     };
 
-    if no_out_file_given {
+    if Path::new(&dbpath).exists() {
         let opt = get_user_confirmation(&format!(
             "Are you sure you want to replace the credential database at {}",
             dbpath

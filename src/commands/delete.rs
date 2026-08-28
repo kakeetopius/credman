@@ -27,11 +27,11 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
     for account in accounts {
         let exists = db::check_account_exists(&account, dbcon)?;
         if !exists {
-            error_str.push_str(&format!("Account {} does not exist\n", account));
+            error_str.push_str(&format!("Account '{}' does not exist\n", account));
             continue;
         }
         let opt = get_user_confirmation(&format!(
-            "Are you sure you want to delete {} (yes/no)",
+            "Are you sure you want to delete '{}' (yes/no)",
             account
         ))?;
         if !opt {
@@ -67,11 +67,11 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
     for apikey in apikeys {
         let exists = db::check_apikey_exists(&apikey, dbcon)?;
         if !exists {
-            error_str.push_str(&format!("API Key {} does not exist\n", apikey));
+            error_str.push_str(&format!("API Key '{}' does not exist\n", apikey));
             continue;
         }
         let opt = get_user_confirmation(&format!(
-            "Are you sure you want to delete {} (yes/no)",
+            "Are you sure you want to delete '{}' (yes/no)",
             apikey
         ))?;
         if !opt {
