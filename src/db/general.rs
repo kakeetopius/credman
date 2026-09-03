@@ -39,26 +39,49 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
 }
 
 fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
-    let master_pass = ioutils::get_terminal_input("Enter cman master password", false, true)?;
-    if master_pass.is_empty() {
-        return Err(cman_error!("Master password cannot be empty"));
-    }
+    const MAX_TRIES: i32 = 3;
+
+    let mut tries = 0;
+    let mut failed = true;
+
     let pragma_query = "PRAGMA cipher_log = 'off';".to_string();
     dbcon.execute_batch(&pragma_query)?;
 
-    let pragma_query = format!("PRAGMA key = '{}';", master_pass);
-    dbcon.execute_batch(&pragma_query)?;
+    while failed && tries < MAX_TRIES {
+        let prompt = if tries == 0 {
+            "Enter cman master password"
+        } else {
+            "Wrong Password. Please Try again"
+        };
 
-    let test_query = "SELECT COUNT(*) FROM sqlite_master";
-    if let Err(err) = dbcon.execute_batch(test_query) {
-        match err {
-            rusqlite::Error::SqliteFailure(e, _) if e.code == ErrorCode::NotADatabase => {
-                return Err(cman_error!(
-                    "Could not decrypt database. Please check the password and try again."
-                ));
-            }
-            _ => return Err(CMError::RusqlilteError(err)),
+        let master_pass = ioutils::get_terminal_input(prompt, false, true)?;
+
+        if master_pass.is_empty() {
+            return Err(cman_error!("Master password cannot be empty"));
         }
+
+        let decryption_query = format!("PRAGMA key = '{}';", master_pass);
+        dbcon.execute_batch(&decryption_query)?;
+
+        let test_query = "SELECT COUNT(*) FROM sqlite_master";
+        match dbcon.execute_batch(test_query) {
+            Err(err) => match err {
+                rusqlite::Error::SqliteFailure(e, _) if e.code == ErrorCode::NotADatabase => {
+                    // this error is most likely caused if a wrong password given
+                    tries += 1;
+                    continue;
+                }
+                _ => return Err(CMError::RusqlilteError(err)), // any other error we return immediately.
+            },
+
+            Ok(()) => failed = false,
+        }
+    }
+
+    if failed {
+        return Err(cman_error!(
+            "Could not decrypt database. Please check the password and try again."
+        ));
     }
 
     Ok(())

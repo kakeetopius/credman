@@ -40,6 +40,8 @@ pub enum CMError {
     Custom(CustomError),
 }
 
+impl Error for CMError {}
+
 impl fmt::Display for CMError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
