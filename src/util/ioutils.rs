@@ -1,11 +1,14 @@
-use crate::objects::Secret;
-use crate::util::argparser::{CmanArgs, Commands, FieldType, GetArgs, SecretType};
-use crate::util::errors::CMError;
+use std::{fmt::Display, sync::Mutex, time::Duration};
 
 use inquire::*;
-use std::fmt::Display;
-use std::sync::Mutex;
-use std::time::Duration;
+
+use crate::{
+    objects::Secret,
+    util::{
+        argparser::{CmanArgs, Commands, FieldType, GetArgs, SecretType},
+        errors::CMError,
+    },
+};
 
 static QUIET: Mutex<bool> = Mutex::new(false);
 

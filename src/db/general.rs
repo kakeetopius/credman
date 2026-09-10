@@ -1,10 +1,14 @@
-use crate::cman_error;
-use crate::util::errors::{CMError, CustomError};
-use crate::util::ioutils;
+use std::fs::exists;
 
 use rusqlite::{Connection, ErrorCode, OpenFlags, Result};
 
-use std::fs::exists;
+use crate::{
+    cman_error,
+    util::{
+        errors::{CMError, CustomError},
+        ioutils,
+    },
+};
 
 pub fn get_db_con(dbfile: &str) -> Result<Connection, CMError> {
     let mut is_new_db: bool = false;

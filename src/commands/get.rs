@@ -1,5 +1,6 @@
-use crate::{commands::*, util::ioutils};
 use serde_json;
+
+use crate::{commands::*, util::ioutils};
 
 pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
