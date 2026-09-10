@@ -1,12 +1,9 @@
-use crate::util::argparser::FieldType;
-use crate::util::errors::CMError;
-use crate::util::ioutils::print_result;
-use std::thread::sleep;
+use std::{fmt::Display, thread::sleep, time};
 
 use arboard::Clipboard;
 use serde::{Deserialize, Serialize};
 
-use std::{fmt::Display, time};
+use crate::util::{argparser::FieldType, errors::CMError, ioutils::print_result};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]

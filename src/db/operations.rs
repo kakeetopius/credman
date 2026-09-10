@@ -1,9 +1,13 @@
-use crate::cman_error;
-use crate::objects::{APIObj, AccountObj, Secret};
-use crate::util::argparser::FieldType;
-use crate::util::errors::{CMError, CustomError};
-
 use rusqlite::Connection;
+
+use crate::{
+    cman_error,
+    objects::{APIObj, AccountObj, Secret},
+    util::{
+        argparser::FieldType,
+        errors::{CMError, CustomError},
+    },
+};
 
 pub fn check_account_exists(
     account_name: &str,

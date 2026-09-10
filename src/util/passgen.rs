@@ -1,8 +1,10 @@
-use crate::cman_error;
-use crate::util::errors::{CMError, CustomError};
-
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
+
+use crate::{
+    cman_error,
+    util::errors::{CMError, CustomError},
+};
 
 const MAX_PASSLEN: usize = 255;
 const DEFAULT_PASSLEN: usize = 16;

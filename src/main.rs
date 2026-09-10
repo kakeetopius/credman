@@ -1,8 +1,8 @@
 use clap::Parser;
-
-use credman::commands::run_command;
-use credman::util::argparser;
-use credman::util::ioutils::set_terminal_settings;
+use credman::{
+    commands::run_command,
+    util::{argparser, ioutils::set_terminal_settings},
+};
 
 fn main() {
     let cli_args = argparser::CmanArgs::parse();

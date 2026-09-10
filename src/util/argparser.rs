@@ -1,6 +1,7 @@
+use std::fmt::Display;
+
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
-use std::fmt::Display;
 
 /// A simple tool to manage and securely store secrets like login credentials and API keys locally.
 #[derive(Parser, Debug)]
