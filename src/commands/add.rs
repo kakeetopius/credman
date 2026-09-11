@@ -49,6 +49,7 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
             account_name: name.to_string(),
             user_name,
             password: pass,
+            ..Default::default()
         },
         dbcon,
     )?;
@@ -74,6 +75,7 @@ fn add_new_api(name: &str, dbcon: &Connection) -> Result {
             description: desc,
             user_name,
             api_key: apikey,
+            ..Default::default()
         },
         dbcon,
     )?;
@@ -175,6 +177,7 @@ fn add_acc_from_file_line(
         account_name: account_name.to_string(),
         user_name: user_name.to_string(),
         password: pass,
+        ..Default::default()
     };
 
     db::add_account_to_db(&acc, dbcon)?;
@@ -224,6 +227,7 @@ fn add_api_from_file_line(
         user_name: user_name.to_string(),
         description: description.to_string(),
         api_key: api_key.to_string(),
+        ..Default::default()
     };
 
     db::add_apikey_to_db(&api, dbcon)?;

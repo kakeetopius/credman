@@ -97,8 +97,8 @@ pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) -> Result<(), CME
     }
 
     if secrets.len() == 1 {
-        // send the password or api key to clipboard if only one was requested
-        secrets[0].send_field_to_clipboard(default_field)?;
+        // send whatever field was requested to clipboard if only one was requested
+        secrets[0].send_field_to_clipboard(getargs.field.unwrap_or(default_field))?;
     }
 
     Ok(())

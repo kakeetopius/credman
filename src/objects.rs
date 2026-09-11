@@ -1,6 +1,7 @@
 use std::{fmt::Display, thread::sleep, time};
 
 use arboard::Clipboard;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::util::{argparser::FieldType, errors::CMError, ioutils::print_result};
@@ -14,19 +15,23 @@ pub enum Secret {
     API(APIObj),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AccountObj {
     pub account_name: String,
     pub user_name: String,
     pub password: String,
+    pub created_at: DateTime<Utc>,
+    pub password_last_changed: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct APIObj {
     pub api_name: String,
     pub description: String,
     pub user_name: String,
     pub api_key: String,
+    pub created_at: DateTime<Utc>,
+    pub api_key_last_changed: DateTime<Utc>,
 }
 
 impl From<AccountObj> for Secret {
@@ -64,9 +69,17 @@ impl Display for APIObj {
 
 impl AccountObj {
     fn print(&self) {
-        print_result("Name", &self.account_name);
-        print_result("User", &self.user_name);
-        print_result("Pass", &self.password);
+        println!("Name:          {}", self.account_name);
+        println!("User:          {}", self.user_name);
+        println!("Pass:          {}", self.password);
+        println!(
+            "Created:       {}",
+            self.created_at.with_timezone(&chrono::Local)
+        );
+        println!(
+            "Last Changed:  {}",
+            self.password_last_changed.with_timezone(&chrono::Local)
+        );
         println!();
     }
 
@@ -132,10 +145,18 @@ impl AccountObj {
 
 impl APIObj {
     fn print(&self) {
-        print_result("Name", &self.api_name);
-        print_result("User", &self.user_name);
-        print_result("Desc", &self.description);
-        print_result("Key", &self.api_key);
+        println!("Name:          {}", self.api_name);
+        println!("User:          {}", self.user_name);
+        println!("Desc:          {}", self.description);
+        println!("Key:           {}", self.api_key);
+        println!(
+            "Created:       {}",
+            self.created_at.with_timezone(&chrono::Local)
+        );
+        println!(
+            "Last Changed:  {}",
+            self.api_key_last_changed.with_timezone(&chrono::Local)
+        );
         println!();
     }
 

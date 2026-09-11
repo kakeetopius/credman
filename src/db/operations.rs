@@ -71,7 +71,7 @@ pub fn delete_apikey_from_db(
 }
 
 pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Secret, CMError> {
-    let query = "SELECT acc_name, user_name, password FROM account WHERE acc_name = ?1;";
+    let query = "SELECT acc_name, user_name, password, created_at, password_last_changed FROM account WHERE acc_name = ?1;";
     let mut stmt = dbcon.prepare(query)?;
     let mut results = stmt.query([account_name])?;
     let result = results.next()?;
@@ -81,6 +81,8 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
             account_name: row.get(0)?,
             user_name: row.get(1)?,
             password: row.get(2)?,
+            created_at: row.get(3)?,
+            password_last_changed: row.get(4)?,
         }
         .into())
     } else {
@@ -89,8 +91,7 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
 }
 
 pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secret, CMError> {
-    let query =
-        "SELECT api_name, description, user_name, api_key FROM api_keys WHERE api_name = ?1;";
+    let query = "SELECT api_name, description, user_name, api_key, created_at, api_key_last_changed FROM api_keys WHERE api_name = ?1;";
     let mut stmt = dbcon.prepare(query)?;
     let mut results = stmt.query([apikey_name])?;
     let result = results.next()?;
@@ -101,6 +102,8 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
             description: row.get(1)?,
             user_name: row.get(2)?,
             api_key: row.get(3)?,
+            created_at: row.get(4)?,
+            api_key_last_changed: row.get(5)?,
         }
         .into())
     } else {
@@ -109,13 +112,16 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
 }
 
 pub fn get_all_accounts_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqlite::Error> {
-    let query = "SELECT acc_name, user_name, password FROM account;";
+    let query =
+        "SELECT acc_name, user_name, password, created_at, password_last_changed FROM account;";
     let mut stmt = dbcon.prepare(query)?;
     let rows = stmt.query_map([], |row| {
         Ok(AccountObj {
             account_name: row.get(0)?,
             user_name: row.get(1)?,
             password: row.get(2)?,
+            created_at: row.get(3)?,
+            password_last_changed: row.get(4)?,
         })
     })?;
 
@@ -128,7 +134,7 @@ pub fn get_all_accounts_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusql
 }
 
 pub fn get_all_apikeys_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqlite::Error> {
-    let query = "SELECT api_name, description, user_name, api_key FROM api_keys;";
+    let query = "SELECT api_name, description, user_name, api_key, created_at, api_key_last_changed FROM api_keys;";
     let mut stmt = dbcon.prepare(query)?;
     let rows = stmt.query_map([], |row| {
         Ok(APIObj {
@@ -136,6 +142,8 @@ pub fn get_all_apikeys_from_db(dbcon: &Connection) -> Result<Vec<Secret>, rusqli
             description: row.get(1)?,
             user_name: row.get(2)?,
             api_key: row.get(3)?,
+            created_at: row.get(4)?,
+            api_key_last_changed: row.get(5)?,
         })
     })?;
 

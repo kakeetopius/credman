@@ -98,19 +98,47 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
             path
         )));
     }
-    let create_query = "CREATE TABLE account (\
-	 acc_id INTEGER PRIMARY KEY AUTOINCREMENT,\
-	 acc_name VARCHAR(100) NOT NULL UNIQUE,\
-	 user_name VARCHAR(100),\
-	 password VARCHAR(256)\
-	);\
-	CREATE TABLE api_keys (\
-	api_id INTEGER PRIMARY KEY AUTOINCREMENT,\
-	api_name VARCHAR(100) NOT NULL UNIQUE,\
-	description VARCHAR(100),\
-	user_name VARCHAR(100),\
-	api_key VARCHAR(256)\
-	);";
+
+    let create_query = r#"
+    CREATE TABLE account (
+        acc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        acc_name VARCHAR(100) NOT NULL UNIQUE,
+        user_name VARCHAR(100),
+        password VARCHAR(256),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        password_last_changed DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE api_keys (
+        api_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        api_name VARCHAR(100) NOT NULL UNIQUE,
+        description VARCHAR(100),
+        user_name VARCHAR(100),
+        api_key VARCHAR(256),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        api_key_last_changed DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER account_password_last_changed
+    AFTER UPDATE OF password ON account
+    FOR EACH ROW
+    WHEN OLD.password IS NOT NEW.password
+    BEGIN
+        UPDATE account
+        SET password_last_changed = CURRENT_TIMESTAMP
+        WHERE acc_id = OLD.acc_id;
+    END;
+
+    CREATE TRIGGER api_key_last_changed
+    AFTER UPDATE OF api_key ON api_keys
+    FOR EACH ROW
+    WHEN OLD.api_key IS NOT NEW.api_key
+    BEGIN
+        UPDATE api_keys
+        SET api_key_last_changed = CURRENT_TIMESTAMP
+        WHERE api_id = OLD.api_id;
+    END;
+    "#;
 
     let master_pass = ioutils::get_terminal_input(
         "Enter master password (Make sure to remember it)",
