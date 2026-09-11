@@ -2,13 +2,25 @@ use crate::commands::*;
 
 pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
-    let sec_name = &args.secret;
+    let sec_name = match &args.secret {
+        Some(name) => name,
+        None => {
+            if args.batch.is_none() {
+                return Err(cman_error!(
+                    "Please provide a secret to add. Use 'cman add --help' for more details."
+                ));
+            }
+            ""
+        }
+    };
+
     if sec_name == "master" {
         return Err(cman_error!(
             "Cannot use the name 'master' because it is reserved for the master password."
         ));
-    } else if args.batch {
-        return add_secrets_from_batch(sec_name, args.passlen, dbcon);
+    }
+    if let Some(batch_file) = &args.batch {
+        return add_secrets_from_batch(batch_file, args.passlen, dbcon);
     }
 
     match sec_type {
