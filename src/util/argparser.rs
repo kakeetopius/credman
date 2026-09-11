@@ -45,6 +45,9 @@ pub enum Commands {
     #[command(after_long_help = "Note: If the --type argument is not given 'login' is assumed.")]
     Ls(LsArgs),
 
+    /// Export stored secrets.
+    Export(ExportArgs),
+
     /// Pull the credential database from a remote url.
     #[command(
         after_long_help = "The url can be provided via the environment variable CMAN_DBURL or via the --url flag."
@@ -73,7 +76,7 @@ pub struct InitArgs {
 pub struct AddArgs {
     /// The name of the secret to add to storage. Note that the word "master" cannot be used as a
     /// name
-    pub secret: String,
+    pub secret: Option<String>,
 
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
@@ -87,13 +90,9 @@ pub struct AddArgs {
     #[arg(long = "no-auto")]
     pub no_auto: bool,
 
-    /// The SECRET_NAME is treated as file containing credentials one per line (Use cman add --help for more details).
-    #[arg(
-        short,
-        long,
-        long_help = "The SECRET_NAME is treated as file containing credentials one per line."
-    )]
-    pub batch: bool,
+    /// Add secrets from a file containing credentials one per line (Use cman add --help for more details).
+    #[arg(short, long, value_name = "PATH")]
+    pub batch: Option<String>,
 }
 
 #[derive(Args, Debug)]
@@ -161,14 +160,6 @@ pub struct LsArgs {
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
 
-    /// Print the results returned in json form.
-    #[arg(short, long)]
-    pub json: bool,
-
-    #[arg(short, long)]
-    /// Print json ouput as pretty-formatted JSON
-    pub pretty: bool,
-
     #[arg(short, long)]
     /// Get all secrets of all types
     pub all: bool,
@@ -182,8 +173,39 @@ pub struct PullArgs {
 
     /// The file to write the remote database to. Defaults to CMAN_DBFILE environment variable or
     /// the $HOME/.creds.db file if the environment variable is missing.
-    #[arg(short, long)]
+    #[arg(short, long, value_name = "PATH")]
     pub out: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct ExportArgs {
+    /// The type of secret to export
+    #[arg(value_enum, short = 't', long = "type")]
+    pub secret_type: Option<SecretType>,
+
+    /// Format to export the secret as.
+    #[arg(value_enum, short, long, default_value = "list")]
+    pub format: ExportFormats,
+
+    /// Export JSON with human-readable formatting when using the JSON format.
+    #[arg(short, long)]
+    pub pretty: bool,
+
+    /// File to write the exported secrets to. If omitted, output is printed to stdout.
+    #[arg(short, long, value_name = "PATH")]
+    pub output_file: Option<String>,
+
+    #[arg(short, long)]
+    /// Export all secrets of all types
+    pub all: bool,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
+pub enum ExportFormats {
+    /// One login credential or API key per line. The same format that `cman add` uses.
+    List,
+    /// JSON array of login credentials and API keys.
+    Json,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]

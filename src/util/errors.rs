@@ -36,6 +36,7 @@ pub enum CMError {
     InquireError(inquire::InquireError),
     ClipboardError(arboard::Error),
     ReqwestError(reqwest::Error),
+    JSONError(serde_json::Error),
     Custom(CustomError),
 }
 
@@ -50,6 +51,7 @@ impl fmt::Display for CMError {
             Self::InquireError(err) => write!(f, "Error: {}", err),
             Self::ReqwestError(err) => write!(f, "Error: {}", err),
             Self::ClipboardError(err) => write!(f, "Error: {}", err),
+            Self::JSONError(err) => write!(f, "Error: {}", err),
         }
     }
 }
@@ -87,5 +89,11 @@ impl From<arboard::Error> for CMError {
 impl From<reqwest::Error> for CMError {
     fn from(value: reqwest::Error) -> Self {
         CMError::ReqwestError(value)
+    }
+}
+
+impl From<serde_json::Error> for CMError {
+    fn from(value: serde_json::Error) -> Self {
+        CMError::JSONError(value)
     }
 }

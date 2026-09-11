@@ -121,6 +121,13 @@ impl AccountObj {
         sleep(time::Duration::from_millis(5));
         Ok(())
     }
+
+    fn to_comma_separated_string(&self) -> String {
+        format!(
+            "login,{},{},{}",
+            self.account_name, self.user_name, self.password
+        )
+    }
 }
 
 impl APIObj {
@@ -185,6 +192,13 @@ impl APIObj {
         sleep(time::Duration::from_millis(5));
         Ok(())
     }
+
+    fn to_comma_separated_string(&self) -> String {
+        format!(
+            "api,{},{},{},{}",
+            self.api_name, self.user_name, self.description, self.api_key
+        )
+    }
 }
 
 impl Secret {
@@ -234,6 +248,13 @@ impl Secret {
         match self {
             Self::Account(acc) => acc.send_field_to_clipboard(field),
             Self::API(api) => api.send_field_to_clipboard(field),
+        }
+    }
+
+    pub fn to_comma_separated_string(&self) -> String {
+        match self {
+            Self::Account(acc) => acc.to_comma_separated_string(),
+            Self::API(api) => api.to_comma_separated_string(),
         }
     }
 }

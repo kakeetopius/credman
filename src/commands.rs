@@ -30,6 +30,7 @@ use crate::{
 mod add;
 mod change;
 mod delete;
+mod export;
 mod get;
 
 type Result = std::result::Result<(), CMError>;
@@ -68,6 +69,7 @@ pub fn run_command(args: &CmanArgs) -> Result {
         Commands::Change(a) => change::run_change(a, &dbcon),
         Commands::Delete(a) => delete::run_delete(a, &dbcon),
         Commands::Ls(a) => run_list(a, &dbcon),
+        Commands::Export(a) => export::run_export(a, &dbcon),
         _ => Ok(()),
     }
 }
@@ -104,16 +106,6 @@ fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {
             SecretType::Api => db::get_all_apikeys_from_db(dbcon)?,
         }
     };
-
-    if args.json {
-        let json = if args.pretty {
-            serde_json::to_string_pretty(&results).unwrap_or("".to_string())
-        } else {
-            serde_json::to_string(&results).unwrap_or("".to_string())
-        };
-        println!("{}", json);
-        return Ok(());
-    }
 
     for result in results {
         result.print();
