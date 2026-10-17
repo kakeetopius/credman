@@ -1,6 +1,19 @@
+use rusqlite::Connection;
 use serde_json;
 
-use crate::{commands::*, util::ioutils};
+use crate::{
+    cman_error,
+    commands::Result,
+    db,
+    objects::Secret,
+    util::{
+        argparser::{GetArgs, SecretType},
+        errors::{CMError, CustomError},
+        ioutils::{
+            self, get_multiple_selections_from_terminal, get_terminal_input_with_suggestions,
+        },
+    },
+};
 
 pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
@@ -10,8 +23,20 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
             SecretType::Api => get_apikeys(s, dbcon)?,
         },
         None => match sec_type {
-            SecretType::Login => get_accounts_from_user(dbcon)?,
-            SecretType::Api => get_apikeys_from_user(dbcon)?,
+            SecretType::Login => {
+                if args.multiple {
+                    get_accounts_from_user(dbcon)?
+                } else {
+                    vec![get_account_from_user(dbcon)?]
+                }
+            }
+            SecretType::Api => {
+                if args.multiple {
+                    get_apikeys_from_user(dbcon)?
+                } else {
+                    vec![get_apikey_from_user(dbcon)?]
+                }
+            }
         },
     };
 
@@ -103,7 +128,7 @@ pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret,
     get_terminal_input_with_suggestions("Enter the account name", all_accounts)
 }
 
-pub fn get_api_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
+pub fn get_apikey_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
         return Err(cman_error!(

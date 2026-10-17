@@ -4,14 +4,10 @@ A simple command-line tool to manage and securely store secrets like login crede
 
 ## Features
 
-- **Secure local storage**: Store credentials encrypted with SQLCipher
+- **Secure local storage**: Locally stores encrypted credentials.
 - **Multiple secret types**: Support for login credentials and API keys
 - **Password generation**: Auto-generate secure passwords or provide your own
-- **Batch operations**: Add multiple secrets at once from a file
-- **Flexible retrieval**: Get secrets by name, type, or specific fields
-- **Interactive mode**: Select from stored secrets interactively
 - **JSON output**: Export secrets in JSON format for scripting
-- **Shell completions**: Built-in support for bash, zsh, fish, powershell and elvish shells
 
 ## Installation
 
@@ -195,18 +191,6 @@ api,openai,user123,my api key,sk-1234567890abcdef
 
 </details>
 
-## Commands
-
-| Command            | Description                        |
-| ------------------ | ---------------------------------- |
-| `cman init`        | Initialize the credential database |
-| `cman add`         | Add a new secret                   |
-| `cman get`         | Retrieve secret details            |
-| `cman change`      | Modify an existing secret          |
-| `cman delete`      | Remove a secret permanently        |
-| `cman ls`          | List all secrets of a type         |
-| `cman completions` | Generate shell completions         |
-
 ## Environment Variables
 
 - `$CMAN_DBFILE`: Path to the credential database (defaults to `~/.creds.db`)
@@ -222,12 +206,6 @@ api,openai,user123,my api key,sk-1234567890abcdef
 - Master password protects access to the database
 - No secrets are logged or written to temporary files
 - All operations are performed in-memory.
-
-## Requirements
-
-- Rust 1.70+
-- OpenSSL development headers
-- SQLite 3
 
 ## License
 

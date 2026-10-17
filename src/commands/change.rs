@@ -1,4 +1,20 @@
-use crate::commands::*;
+use rusqlite::Connection;
+
+use crate::{
+    cman_error,
+    commands::{
+        Result,
+        get::{get_account_from_user, get_apikey_from_user},
+    },
+    db,
+    objects::Secret,
+    util::{
+        argparser::{ChangeArgs, FieldType, SecretType},
+        errors::{CMError, CustomError},
+        ioutils::{get_terminal_input, get_user_confirmation},
+        passgen,
+    },
+};
 
 pub fn run_change(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
@@ -88,7 +104,7 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let sec_name = match &args.secret {
         Some(s) => s.clone(),
         None => {
-            let api_obj = get_api_from_user(dbcon)?;
+            let api_obj = get_apikey_from_user(dbcon)?;
             if let Secret::API(api) = api_obj {
                 api.api_name.clone()
             } else {

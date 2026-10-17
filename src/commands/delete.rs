@@ -1,4 +1,15 @@
-use crate::commands::*;
+use rusqlite::Connection;
+
+use crate::{
+    cman_error,
+    commands::{Result, get},
+    db,
+    util::{
+        argparser::{DeleteArgs, SecretType},
+        errors::{CMError, CustomError},
+        ioutils::get_user_confirmation,
+    },
+};
 
 pub fn run_delete(args: &DeleteArgs, dbcon: &Connection) -> Result {
     let secret_type = args.secret_type.unwrap_or(SecretType::Login);
@@ -14,11 +25,13 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
     let accounts = match &args.secret {
         Some(accounts) => accounts.clone(),
         None => {
-            let selections: Vec<String> = get::get_accounts_from_user(dbcon)?
-                .iter()
-                .map(|secret| secret.get_name())
-                .collect();
-            selections
+            let accounts = if args.multiple {
+                get::get_accounts_from_user(dbcon)?
+            } else {
+                vec![get::get_account_from_user(dbcon)?]
+            };
+
+            accounts.iter().map(|secret| secret.get_name()).collect()
         }
     };
 
@@ -57,11 +70,16 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
 fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
     let apikeys = match &args.secret {
         Some(apikeys) => apikeys.clone(),
-        None => get::get_apikeys_from_user(dbcon)?
-            .iter()
-            .map(|secret| secret.get_name())
-            .collect(),
+        None => {
+            let api_keys = if args.multiple {
+                get::get_apikeys_from_user(dbcon)?
+            } else {
+                vec![get::get_apikey_from_user(dbcon)?]
+            };
+            api_keys.iter().map(|secret| secret.get_name()).collect()
+        }
     };
+
     let mut error_str = String::new();
     let mut successfull: Vec<String> = Vec::new();
     for apikey in apikeys {

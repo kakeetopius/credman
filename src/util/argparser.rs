@@ -131,6 +131,10 @@ pub struct GetArgs {
     #[arg(value_enum, short, long = "field")]
     pub field: Option<FieldType>,
 
+    /// Get many secrets at once
+    #[arg(short, long)]
+    pub multiple: bool,
+
     /// Do not print prefixes to stdout. Only the secret's retrieved details are printed.
     #[arg(short, long)]
     pub quiet: bool,
@@ -152,6 +156,10 @@ pub struct DeleteArgs {
     /// The type of Secret.
     #[arg(value_enum, short = 't', long = "type")]
     pub secret_type: Option<SecretType>,
+
+    /// Delete many secrets at once
+    #[arg(short, long)]
+    pub multiple: bool,
 }
 
 #[derive(Args, Debug)]

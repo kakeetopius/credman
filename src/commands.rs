@@ -1,29 +1,18 @@
 use std::{
     env::{home_dir, var_os},
-    fs::File,
-    io::{BufRead, BufReader},
     path::Path,
 };
 
 use clap::CommandFactory;
 use clap_complete::generate;
-use get::{get_account_from_user, get_api_from_user};
 use rusqlite::Connection;
 
 use crate::{
     cman_error, db,
-    objects::{APIObj, AccountObj, Secret},
     util::{
-        argparser::{
-            AddArgs, ChangeArgs, CmanArgs, Commands, DeleteArgs, FieldType, GetArgs, InitArgs,
-            LsArgs, PullArgs, SecretType,
-        },
+        argparser::{CmanArgs, Commands, InitArgs, LsArgs, PullArgs, SecretType},
         errors::{CMError, CustomError},
-        ioutils::{
-            self, get_multiple_selections_from_terminal, get_terminal_input,
-            get_terminal_input_with_suggestions, get_user_confirmation,
-        },
-        passgen,
+        ioutils,
     },
 };
 
@@ -144,7 +133,7 @@ fn run_pull(args: &PullArgs) -> Result {
     };
 
     if Path::new(&dbpath).exists() {
-        let opt = get_user_confirmation(&format!(
+        let opt = ioutils::get_user_confirmation(&format!(
             "Are you sure you want to replace the credential database at {}",
             dbpath
         ))?;
