@@ -1,5 +1,22 @@
-use crate::commands::*;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
+use rusqlite::Connection;
+
+use crate::{
+    cman_error,
+    commands::Result,
+    db,
+    objects::{APIObj, AccountObj},
+    util::{
+        argparser::{AddArgs, SecretType},
+        errors::{CMError, CustomError},
+        ioutils::get_terminal_input,
+        passgen,
+    },
+};
 pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
     let sec_type = args.secret_type.unwrap_or(SecretType::Login);
     let sec_name = match &args.secret {
