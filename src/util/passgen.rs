@@ -1,18 +1,14 @@
+use anyhow::anyhow;
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
-
-use crate::{
-    cman_error,
-    util::errors::{CMError, CustomError},
-};
 
 const MAX_PASSLEN: usize = 255;
 const DEFAULT_PASSLEN: usize = 16;
 
-pub fn get_random_pass(passlen: Option<usize>) -> Result<String, CMError> {
+pub fn get_random_pass(passlen: Option<usize>) -> anyhow::Result<String> {
     let passlen = passlen.unwrap_or(DEFAULT_PASSLEN);
     if passlen > MAX_PASSLEN {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Password length provided is above the upper limit of {} characters",
             MAX_PASSLEN
         )));
@@ -27,7 +23,7 @@ pub fn get_random_pass(passlen: Option<usize>) -> Result<String, CMError> {
     let mut rng = match ChaCha20Rng::try_from_os_rng() {
         Ok(r) => r,
         Err(e) => {
-            return Err(cman_error!(&format!("Error generating Password: {}", e)));
+            return Err(anyhow!(format!("Error generating Password: {}", e)));
         }
     };
     rng.fill_bytes(&mut index_buff);

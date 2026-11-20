@@ -1,12 +1,9 @@
+use anyhow::anyhow;
 use rusqlite::Connection;
 
 use crate::{
-    cman_error,
     objects::{APIObj, AccountObj, Secret},
-    util::{
-        argparser::FieldType,
-        errors::{CMError, CustomError},
-    },
+    util::argparser::FieldType,
 };
 
 pub fn check_account_exists(
@@ -70,7 +67,7 @@ pub fn delete_apikey_from_db(
     Ok(affected_rows)
 }
 
-pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Secret, CMError> {
+pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> anyhow::Result<Secret> {
     let query = "SELECT acc_name, user_name, password, created_at, password_last_changed FROM account WHERE acc_name = ?1;";
     let mut stmt = dbcon.prepare(query)?;
     let mut results = stmt.query([account_name])?;
@@ -86,11 +83,11 @@ pub fn get_account_from_db(account_name: &str, dbcon: &Connection) -> Result<Sec
         }
         .into())
     } else {
-        Err(cman_error!(&format!("Account {} not found", account_name)))
+        Err(anyhow!(format!("Account {} not found", account_name)))
     }
 }
 
-pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secret, CMError> {
+pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> anyhow::Result<Secret> {
     let query = "SELECT api_name, description, user_name, api_key, created_at, api_key_last_changed FROM api_keys WHERE api_name = ?1;";
     let mut stmt = dbcon.prepare(query)?;
     let mut results = stmt.query([apikey_name])?;
@@ -107,7 +104,7 @@ pub fn get_apikey_from_db(apikey_name: &str, dbcon: &Connection) -> Result<Secre
         }
         .into())
     } else {
-        Err(cman_error!(&format!("API Key {} not found", apikey_name)))
+        Err(anyhow!(format!("API Key {} not found", apikey_name)))
     }
 }
 
@@ -159,15 +156,13 @@ pub fn change_db_account_field(
     field: FieldType,
     new_value: &str,
     dbcon: &Connection,
-) -> Result<usize, CMError> {
+) -> anyhow::Result<usize> {
     let field_to_change = match field {
         FieldType::User => "user_name",
         FieldType::Secname => "acc_name",
         FieldType::Pass => "password",
         _ => {
-            return Err(cman_error!(
-                "The given field is invalid for a login credential"
-            ));
+            return Err(anyhow!("The given field is invalid for a login credential"));
         }
     };
 
@@ -185,14 +180,14 @@ pub fn change_db_apikey_field(
     field: FieldType,
     new_value: &str,
     dbcon: &Connection,
-) -> Result<usize, CMError> {
+) -> anyhow::Result<usize> {
     let field_to_change = match field {
         FieldType::User => "user_name",
         FieldType::Secname => "api_name",
         FieldType::Desc => "description",
         FieldType::Key => "api_key",
         _ => {
-            return Err(cman_error!("The given field is invalid for an api key."));
+            return Err(anyhow!("The given field is invalid for an api key."));
         }
     };
 

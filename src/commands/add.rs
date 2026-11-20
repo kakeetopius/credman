@@ -3,16 +3,15 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use anyhow::anyhow;
 use rusqlite::Connection;
 
 use crate::{
-    cman_error,
     commands::Result,
     db,
     objects::{APIObj, AccountObj},
     util::{
         argparser::{AddArgs, SecretType},
-        errors::{CMError, CustomError},
         ioutils::get_terminal_input,
         passgen,
     },
@@ -23,7 +22,7 @@ pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
         Some(name) => name,
         None => {
             if args.batch.is_none() {
-                return Err(cman_error!(
+                return Err(anyhow!(
                     "Please provide a secret to add. Use 'cman add --help' for more details."
                 ));
             }
@@ -32,7 +31,7 @@ pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
     };
 
     if sec_name == "master" {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "Cannot use the name 'master' because it is reserved for the master password."
         ));
     }
@@ -51,7 +50,7 @@ pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
 fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Connection) -> Result {
     let exists = db::check_account_exists(name, dbcon)?;
     if exists {
-        return Err(cman_error!(&format!("Account '{}' already exists", name)));
+        return Err(anyhow!(format!("Account '{}' already exists", name)));
     }
     let user_name = get_terminal_input("Enter username for the account", false, false)?;
 
@@ -76,7 +75,7 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
 fn add_new_api(name: &str, dbcon: &Connection) -> Result {
     let exists = db::check_apikey_exists(name, dbcon)?;
     if exists {
-        return Err(cman_error!(&format!("API Key '{}' already exists", name)));
+        return Err(anyhow!(format!("API Key '{}' already exists", name)));
     }
     let user_name = get_terminal_input(
         "Enter username for the account associated with API Key (if any)",
@@ -103,7 +102,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
     let file = File::open(batch_file)?;
     let reader = BufReader::new(file);
     let mut lineno = 1;
-    let mut errors: Vec<CMError> = Vec::new();
+    let mut errors: Vec<anyhow::Error> = Vec::new();
     let mut successfull: Vec<String> = Vec::new();
 
     for line in reader.lines() {
@@ -128,7 +127,7 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
                 Err(e) => errors.push(e),
             }
         } else {
-            errors.push(cman_error!(&format!(
+            errors.push(anyhow!(format!(
                 "Line {}: First field should be 'login' or 'api'\n",
                 lineno
             )));
@@ -153,12 +152,9 @@ fn add_acc_from_file_line(
     fields: &[&str],
     lineno: i32,
     passlen: Option<usize>,
-) -> std::result::Result<String, CMError> {
+) -> anyhow::Result<String> {
     if fields.len() != 4 {
-        return Err(cman_error!(&format!(
-            "Line {}: Wrong number of fields",
-            lineno
-        )));
+        return Err(anyhow!(format!("Line {}: Wrong number of fields", lineno)));
     }
     let (account_name, user_name) = (fields[1], fields[2]);
     let pass = if fields[3] == "?" {
@@ -169,22 +165,22 @@ fn add_acc_from_file_line(
 
     let exists = db::check_account_exists(account_name, dbcon)?;
     if exists {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: Account '{}' already exists",
             lineno, account_name
         )));
     } else if account_name == "master" {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: Account name cannot be 'master'.",
             lineno
         )));
     } else if account_name.is_empty() {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: Account name cannot be empty.",
             lineno
         )));
     } else if pass.is_empty() {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: No password provided. Use ? as the password if password generation for the account is required.",
             lineno
         )));
@@ -206,37 +202,31 @@ fn add_api_from_file_line(
     dbcon: &Connection,
     fields: &[&str],
     lineno: i32,
-) -> std::result::Result<String, CMError> {
+) -> anyhow::Result<String> {
     if fields.len() != 5 {
-        return Err(cman_error!(&format!(
-            "Line {}: Wrong number of fields",
-            lineno
-        )));
+        return Err(anyhow!(format!("Line {}: Wrong number of fields", lineno)));
     }
 
     let (api_name, user_name, description, api_key) = (fields[1], fields[2], fields[3], fields[4]);
 
     let exists = db::check_apikey_exists(fields[1], dbcon)?;
     if exists {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: API Key '{}' already exists",
             lineno, api_name
         )));
     } else if api_name == "master" {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: Api name cannot be 'master'.",
             lineno
         )));
     } else if api_name.is_empty() {
-        return Err(cman_error!(&format!(
+        return Err(anyhow!(format!(
             "Line {}: Api name cannot be empty.",
             lineno
         )));
     } else if api_key.is_empty() {
-        return Err(cman_error!(&format!(
-            "Line {}: No Api Key provided",
-            lineno
-        )));
+        return Err(anyhow!(format!("Line {}: No Api Key provided", lineno)));
     }
 
     let api = APIObj {

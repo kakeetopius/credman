@@ -4,15 +4,12 @@ use inquire::*;
 
 use crate::{
     objects::Secret,
-    util::{
-        argparser::{CmanArgs, Commands, FieldType, GetArgs, SecretType},
-        errors::CMError,
-    },
+    util::argparser::{CmanArgs, Commands, FieldType, GetArgs, SecretType},
 };
 
 static QUIET: Mutex<bool> = Mutex::new(false);
 
-pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<String, CMError> {
+pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> anyhow::Result<String> {
     if private {
         return get_private_input(prompt, confirm);
     }
@@ -25,7 +22,7 @@ pub fn get_terminal_input(prompt: &str, confirm: bool, private: bool) -> Result<
 pub fn get_terminal_input_with_suggestions<T>(
     prompt: &str,
     suggestions: Vec<T>,
-) -> Result<T, CMError>
+) -> anyhow::Result<T>
 where
     T: Display,
 {
@@ -39,7 +36,7 @@ where
 pub fn get_multiple_selections_from_terminal<T>(
     prompt: &str,
     options: Vec<T>,
-) -> Result<Vec<T>, CMError>
+) -> anyhow::Result<Vec<T>>
 where
     T: Display,
 {
@@ -49,7 +46,7 @@ where
     Ok(options)
 }
 
-fn get_private_input(prompt: &str, confirm: bool) -> Result<String, CMError> {
+fn get_private_input(prompt: &str, confirm: bool) -> anyhow::Result<String> {
     let prompt = &format!("{}: ", prompt);
 
     let mut password = Password::new(prompt);
@@ -61,7 +58,7 @@ fn get_private_input(prompt: &str, confirm: bool) -> Result<String, CMError> {
     Ok(input_password)
 }
 
-pub fn get_user_confirmation(message: &str) -> Result<bool, CMError> {
+pub fn get_user_confirmation(message: &str) -> anyhow::Result<bool> {
     let prompt = &format!("{}: ", message);
     let ans = Confirm::new(prompt).prompt()?;
     Ok(ans)
@@ -75,7 +72,7 @@ pub fn print_result(field: &str, value: &str) {
     println!("{}", value);
 }
 
-pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) -> Result<(), CMError> {
+pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) -> anyhow::Result<()> {
     let sec_type = getargs.secret_type.unwrap_or(SecretType::Login);
     let default_field = if sec_type == SecretType::Login {
         FieldType::Pass

@@ -3,15 +3,15 @@ use std::{
     path::Path,
 };
 
+use anyhow::{Context, anyhow};
 use clap::CommandFactory;
 use clap_complete::generate;
 use rusqlite::Connection;
 
 use crate::{
-    cman_error, db,
+    db,
     util::{
         argparser::{CmanArgs, Commands, InitArgs, LsArgs, PullArgs, SecretType},
-        errors::{CMError, CustomError},
         ioutils,
     },
 };
@@ -22,7 +22,7 @@ mod delete;
 mod export;
 mod get;
 
-type Result = std::result::Result<(), CMError>;
+type Result = std::result::Result<(), anyhow::Error>;
 
 const DB_ENV_VAR: &str = "CMAN_DBFILE";
 const REMOTE_DB_ENV_VAR: &str = "CMAN_DBURL";
@@ -44,7 +44,7 @@ pub fn run_command(args: CmanArgs) -> Result {
         let dbpath = match get_db_path_from_env() {
             Some(p) => p,
             None => {
-                return Err(cman_error!(&format!(
+                return Err(anyhow!(format!(
                     "Could not get Database file path. Try setting the {} environment variable.",
                     DB_ENV_VAR
                 )));
@@ -70,7 +70,7 @@ fn run_init(args: &InitArgs) -> Result {
         Some(p) => p.clone(),
         None => match get_db_path_from_env() {
             None => {
-                return Err(cman_error!(&format!(
+                return Err(anyhow!(format!(
                     "Could not get Database file path. Try setting the {} environment variable.",
                     DB_ENV_VAR
                 )));
@@ -112,7 +112,7 @@ fn run_pull(args: &PullArgs) -> Result {
             match env_url {
                 Some(u) => u,
                 None => {
-                    return Err(cman_error!(&format!(
+                    return Err(anyhow!(format!(
                         "Could not determine remote url to use. Either provide it via the --url flag or set it using the {} environmnet variable.",
                         REMOTE_DB_ENV_VAR
                     )));
@@ -126,7 +126,7 @@ fn run_pull(args: &PullArgs) -> Result {
         None => match get_db_path_from_env() {
             Some(p) => p,
             None => {
-                return Err(cman_error!(&format!(
+                return Err(anyhow!(format!(
                     "Could not determine where to save the database. Try setting the {} environmnet variable or pass the file path with the --out flag.",
                     DB_ENV_VAR
                 )));
@@ -180,9 +180,7 @@ fn get_db_path_from_env() -> Option<String> {
     None
 }
 
-fn try_get_decryption_pass(
-    file_name: Option<String>,
-) -> std::result::Result<Option<String>, CMError> {
+fn try_get_decryption_pass(file_name: Option<String>) -> anyhow::Result<Option<String>> {
     let file = match file_name {
         Some(f) => f,
         None => {
@@ -195,11 +193,12 @@ fn try_get_decryption_pass(
         }
     };
 
-    let content = std::fs::read_to_string(file)?;
+    let content = std::fs::read_to_string(&file)
+        .context(format!("Could not open the password file {file}"))?;
 
     if let Some(pass) = content.lines().next() {
         return Ok(Some(pass.to_owned()));
     }
 
-    Err(cman_error!("The password file contains no password"))
+    Err(anyhow!("The password file contains no password"))
 }

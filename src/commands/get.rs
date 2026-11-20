@@ -1,14 +1,13 @@
+use anyhow::anyhow;
 use rusqlite::Connection;
 use serde_json;
 
 use crate::{
-    cman_error,
     commands::Result,
     db,
     objects::Secret,
     util::{
         argparser::{GetArgs, SecretType},
-        errors::{CMError, CustomError},
         ioutils::{
             self, get_multiple_selections_from_terminal, get_terminal_input_with_suggestions,
         },
@@ -72,12 +71,9 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     Ok(())
 }
 
-fn get_accounts(
-    accounts: &Vec<String>,
-    dbcon: &Connection,
-) -> core::result::Result<Vec<Secret>, CMError> {
+fn get_accounts(accounts: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
     let mut account_objs: Vec<Secret> = Vec::new();
-    let mut errors: Vec<CMError> = Vec::new();
+    let mut errors: Vec<anyhow::Error> = Vec::new();
 
     for account in accounts {
         let account = db::get_account_from_db(account, dbcon);
@@ -95,12 +91,9 @@ fn get_accounts(
     Ok(account_objs)
 }
 
-fn get_apikeys(
-    apikeys: &Vec<String>,
-    dbcon: &Connection,
-) -> core::result::Result<Vec<Secret>, CMError> {
+fn get_apikeys(apikeys: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
     let mut api_objs: Vec<Secret> = Vec::new();
-    let mut errors: Vec<CMError> = Vec::new();
+    let mut errors: Vec<anyhow::Error> = Vec::new();
 
     for apikey in apikeys {
         let apikey = db::get_apikey_from_db(apikey, dbcon);
@@ -118,30 +111,30 @@ fn get_apikeys(
     Ok(api_objs)
 }
 
-pub fn get_account_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
+pub fn get_account_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
     if all_accounts.is_empty() {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details."
         ));
     }
     get_terminal_input_with_suggestions("Enter the account name", all_accounts)
 }
 
-pub fn get_apikey_from_user(dbcon: &Connection) -> core::result::Result<Secret, CMError> {
+pub fn get_apikey_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
         ));
     }
     get_terminal_input_with_suggestions("Enter the api key name", all_api_keys)
 }
 
-pub fn get_accounts_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
+pub fn get_accounts_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
     let all_accounts = db::get_all_accounts_from_db(dbcon)?;
     if all_accounts.is_empty() {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "No accounts added yet. Use cman add <account_name> to add your first account. See cman add --help for more details."
         ));
     }
@@ -149,10 +142,10 @@ pub fn get_accounts_from_user(dbcon: &Connection) -> core::result::Result<Vec<Se
     get_multiple_selections_from_terminal("Select accounts", all_accounts)
 }
 
-pub fn get_apikeys_from_user(dbcon: &Connection) -> core::result::Result<Vec<Secret>, CMError> {
+pub fn get_apikeys_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
     let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
     if all_api_keys.is_empty() {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
         ));
     }

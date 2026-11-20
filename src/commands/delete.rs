@@ -1,12 +1,11 @@
+use anyhow::anyhow;
 use rusqlite::Connection;
 
 use crate::{
-    cman_error,
     commands::{Result, get},
     db,
     util::{
         argparser::{DeleteArgs, SecretType},
-        errors::{CMError, CustomError},
         ioutils::get_user_confirmation,
     },
 };
@@ -62,7 +61,7 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
         println!();
     }
     if !error_str.is_empty() {
-        return Err(cman_error!(&error_str));
+        return Err(anyhow!(error_str));
     }
     Ok(())
 }
@@ -107,7 +106,7 @@ fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
         println!();
     }
     if !error_str.is_empty() {
-        return Err(cman_error!(&error_str));
+        return Err(anyhow!(error_str));
     }
     Ok(())
 }

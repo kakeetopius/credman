@@ -4,7 +4,7 @@ use arboard::Clipboard;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::util::{argparser::FieldType, errors::CMError, ioutils::print_result};
+use crate::util::{argparser::FieldType, ioutils::print_result};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -119,7 +119,7 @@ impl AccountObj {
         json_str.to_string()
     }
 
-    fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+    fn send_field_to_clipboard(&self, field: FieldType) -> anyhow::Result<()> {
         let data = match field {
             FieldType::User => &self.user_name,
             FieldType::Secname => &self.account_name,
@@ -197,7 +197,7 @@ impl APIObj {
         json_str.to_string()
     }
 
-    fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+    fn send_field_to_clipboard(&self, field: FieldType) -> anyhow::Result<()> {
         let data = match field {
             FieldType::Secname => &self.api_name,
             FieldType::Desc => &self.description,
@@ -265,7 +265,7 @@ impl Secret {
         }
     }
 
-    pub fn send_field_to_clipboard(&self, field: FieldType) -> Result<(), CMError> {
+    pub fn send_field_to_clipboard(&self, field: FieldType) -> anyhow::Result<()> {
         match self {
             Self::Account(acc) => acc.send_field_to_clipboard(field),
             Self::API(api) => api.send_field_to_clipboard(field),

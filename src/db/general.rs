@@ -1,16 +1,11 @@
 use std::fs::exists;
 
-use rusqlite::{Connection, ErrorCode, OpenFlags, Result};
+use anyhow::anyhow;
+use rusqlite::{Connection, ErrorCode, OpenFlags};
 
-use crate::{
-    cman_error,
-    util::{
-        errors::{CMError, CustomError},
-        ioutils,
-    },
-};
+use crate::util::ioutils;
 
-pub fn get_db_con(dbfile: &str, master_pass: Option<String>) -> Result<Connection, CMError> {
+pub fn get_db_con(dbfile: &str, master_pass: Option<String>) -> anyhow::Result<Connection> {
     let mut is_new_db: bool = false;
     let dbcon = match Connection::open_with_flags(dbfile, OpenFlags::SQLITE_OPEN_READ_WRITE) {
         Ok(con) => con,
@@ -26,7 +21,7 @@ pub fn get_db_con(dbfile: &str, master_pass: Option<String>) -> Result<Connectio
     Ok(dbcon)
 }
 
-fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CMError> {
+fn check_db_error(err: rusqlite::Error, db_path: &str) -> anyhow::Result<Connection> {
     if let rusqlite::Error::SqliteFailure(e, _) = err
         && e.code == ErrorCode::CannotOpen
     {
@@ -39,10 +34,10 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
         }
     }
 
-    Err(CMError::RusqlilteError(err))
+    Err(err.into())
 }
 
-fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
+fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> anyhow::Result<()> {
     const MAX_TRIES: i32 = 3;
 
     let mut tries = 0;
@@ -64,7 +59,7 @@ fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
         };
 
         if master_pass.is_empty() {
-            return Err(cman_error!("Master password cannot be empty"));
+            return Err(anyhow!("Master password cannot be empty"));
         }
 
         let decryption_query = format!("PRAGMA key = '{}';", master_pass);
@@ -78,7 +73,7 @@ fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
                     tries += 1;
                     continue;
                 }
-                _ => return Err(CMError::RusqlilteError(err)), // any other error we return immediately.
+                _ => return Err(err.into()), // any other error we return immediately.
             },
 
             Ok(()) => failed = false,
@@ -86,7 +81,7 @@ fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
     }
 
     if failed {
-        return Err(cman_error!(
+        return Err(anyhow!(
             "Could not decrypt database. Please check the password and try again."
         ));
     }
@@ -94,12 +89,9 @@ fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
     Ok(())
 }
 
-pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
+pub fn create_new_db(path: &str) -> anyhow::Result<Connection> {
     if let Ok(true) = exists(path) {
-        return Err(cman_error!(&format!(
-            "File Already Exists at path: {}",
-            path
-        )));
+        return Err(anyhow!(format!("File Already Exists at path: {}", path)));
     }
 
     let create_query = r#"
@@ -149,7 +141,7 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
         true,
     )?;
     if master_pass.is_empty() {
-        return Err(cman_error!("Master password cannot be empty"));
+        return Err(anyhow!("Master password cannot be empty"));
     }
     let pragma_query = format!("PRAGMA key = '{}';", master_pass);
     let dbcon = Connection::open(path)?;
@@ -160,14 +152,14 @@ pub fn create_new_db(path: &str) -> Result<Connection, CMError> {
     Ok(dbcon)
 }
 
-pub fn change_db_password(dbcon: &Connection) -> Result<(), CMError> {
+pub fn change_db_password(dbcon: &Connection) -> anyhow::Result<()> {
     let master_pass = ioutils::get_terminal_input(
         "Enter new master password (Make sure to remember it)",
         true,
         true,
     )?;
     if master_pass.is_empty() {
-        return Err(cman_error!("Master password cannot be empty"));
+        return Err(anyhow!("Master password cannot be empty"));
     }
     let pragma_query = format!("PRAGMA rekey = '{}';", master_pass);
 
