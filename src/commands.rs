@@ -26,8 +26,9 @@ type Result = std::result::Result<(), CMError>;
 
 const DB_ENV_VAR: &str = "CMAN_DBFILE";
 const REMOTE_DB_ENV_VAR: &str = "CMAN_DBURL";
+const CMAN_PASSWD_FILE: &str = "CMAN_PASSWD_FILE";
 
-pub fn run_command(args: &CmanArgs) -> Result {
+pub fn run_command(args: CmanArgs) -> Result {
     match &args.command {
         Commands::Init(args) => return run_init(args),
         Commands::Pull(args) => return run_pull(args),
@@ -49,7 +50,8 @@ pub fn run_command(args: &CmanArgs) -> Result {
                 )));
             }
         };
-        db::get_db_con(&dbpath)?
+
+        db::get_db_con(&dbpath, try_get_decryption_pass(args.passwd_file)?)?
     };
 
     match &args.command {
@@ -176,4 +178,28 @@ fn get_db_path_from_env() -> Option<String> {
     }
 
     None
+}
+
+fn try_get_decryption_pass(
+    file_name: Option<String>,
+) -> std::result::Result<Option<String>, CMError> {
+    let file = match file_name {
+        Some(f) => f,
+        None => {
+            let env = var_os(CMAN_PASSWD_FILE).and_then(|v| v.into_string().ok());
+            match env {
+                Some(p) => p,
+                None => return Ok(None), // could not get password file from file_name or from env
+                                         // so decryption func will prompt user.
+            }
+        }
+    };
+
+    let content = std::fs::read_to_string(file)?;
+
+    if let Some(pass) = content.lines().next() {
+        return Ok(Some(pass.to_owned()));
+    }
+
+    Err(cman_error!("The password file contains no password"))
 }

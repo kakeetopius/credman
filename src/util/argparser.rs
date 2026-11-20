@@ -13,6 +13,10 @@ If it is not set , cman defaults to $HOME/.creds.db.",
 pub struct CmanArgs {
     #[command(subcommand)]
     pub command: Commands,
+
+    #[arg(long, global = true)]
+    /// A file containing the decryption password on the first line.
+    pub passwd_file: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]

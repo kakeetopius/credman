@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-pub fn get_db_con(dbfile: &str) -> Result<Connection, CMError> {
+pub fn get_db_con(dbfile: &str, master_pass: Option<String>) -> Result<Connection, CMError> {
     let mut is_new_db: bool = false;
     let dbcon = match Connection::open_with_flags(dbfile, OpenFlags::SQLITE_OPEN_READ_WRITE) {
         Ok(con) => con,
@@ -21,7 +21,7 @@ pub fn get_db_con(dbfile: &str) -> Result<Connection, CMError> {
     };
 
     if !is_new_db {
-        decrypt_db(&dbcon)?;
+        decrypt_db(&dbcon, master_pass)?;
     }
     Ok(dbcon)
 }
@@ -42,7 +42,7 @@ fn check_db_error(err: rusqlite::Error, db_path: &str) -> Result<Connection, CME
     Err(CMError::RusqlilteError(err))
 }
 
-fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
+fn decrypt_db(dbcon: &Connection, pass: Option<String>) -> Result<(), CMError> {
     const MAX_TRIES: i32 = 3;
 
     let mut tries = 0;
@@ -58,7 +58,10 @@ fn decrypt_db(dbcon: &Connection) -> Result<(), CMError> {
             "Wrong Password. Please Try again"
         };
 
-        let master_pass = ioutils::get_terminal_input(prompt, false, true)?;
+        let master_pass = match &pass {
+            Some(pass) => pass,
+            None => &ioutils::get_terminal_input(prompt, false, true)?,
+        };
 
         if master_pass.is_empty() {
             return Err(cman_error!("Master password cannot be empty"));
