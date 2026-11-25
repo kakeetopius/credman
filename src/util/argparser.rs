@@ -3,19 +3,25 @@ use std::fmt::Display;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 
-/// A simple tool to manage and securely store secrets like login credentials and API keys locally.
+/// A simple tool to manage and securely store secrets like login credentials and keys locally.
 #[derive(Parser, Debug)]
 #[command
     (version, about, long_about = None, author = "Kakeeto Pius",
-    after_long_help = "Note: cman checks the credential database file from the environment variable $CMAN_DBFILE.\n\
-If it is not set , cman defaults to $HOME/.creds.db.",
+    after_long_help = "Note: cman checks the credential database in order of preference from the following places.\n\
+    1. Command line argument --db-file\n\
+    2. Environment variable $CMAN_DBFILE\n\
+    3. Default location $HOME/.creds.db"
 )]
 pub struct CmanArgs {
     #[command(subcommand)]
     pub command: Commands,
 
     #[arg(long, global = true)]
-    /// A file containing the decryption password on the first line.
+    /// The path to the database file.
+    pub db_file: Option<String>,
+
+    #[arg(long, global = true)]
+    /// A path to a file containing the decryption password on the first line.
     pub passwd_file: Option<String>,
 }
 
@@ -27,7 +33,7 @@ pub enum Commands {
     /// Add a secret to storage.
     #[command(
         after_long_help = "Rules for batch file:\n1. Each line has comma separated details of a single secret with the type as the first field\n\
-        2. For type 'login' the format is login,secretname,username,password\n3. For type 'api' the format is api,secretname,username,description,key\n\
+        2. For type 'login' the format is login,secretname,username,password\n3. For type 'key' the format is key,secretname,username,description,key\n\
         4. If it is required that a given login credential's password is automatically generated, use ? as a placeholder ie login,secretname,username,?\n\
         \n Note: If the --type argument is not given 'login' is assumed."
     )]
@@ -214,9 +220,9 @@ pub struct ExportArgs {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
 pub enum ExportFormats {
-    /// One login credential or API key per line. The same format that `cman add` uses.
+    /// A single set of login details or key details per line. The same format that `cman add` uses.
     List,
-    /// JSON array of login credentials and API keys.
+    /// JSON array of login credentials and keys.
     Json,
 }
 
@@ -225,8 +231,8 @@ pub enum SecretType {
     /// The secret is a login credential.
     Login,
 
-    /// The secret is an API key.
-    Api,
+    /// The secret is a key.
+    Key,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
@@ -240,10 +246,10 @@ pub enum FieldType {
     /// The Password (LOGIN ONLY)
     Pass,
 
-    /// The description of an api key (API ONLY)
+    /// The description of a key (KEY ONLY)
     Desc,
 
-    /// The API Key. (API ONLY)
+    /// The Key. (KEY ONLY)
     Key,
 }
 
@@ -251,7 +257,7 @@ impl Display for SecretType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
             Self::Login => "login",
-            Self::Api => "api_key",
+            Self::Key => "key",
         };
 
         write!(f, "{}", str)
@@ -265,7 +271,7 @@ impl Display for FieldType {
             Self::Secname => "secret_name",
             Self::Pass => "password",
             Self::Desc => "description",
-            Self::Key => "api_key",
+            Self::Key => "key",
         };
 
         write!(f, "{}", str)

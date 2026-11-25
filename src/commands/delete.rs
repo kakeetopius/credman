@@ -15,7 +15,7 @@ pub fn run_delete(args: &DeleteArgs, dbcon: &Connection) -> Result {
 
     match secret_type {
         SecretType::Login => delete_acc(args, dbcon)?,
-        SecretType::Api => delete_api(args, dbcon)?,
+        SecretType::Key => delete_key(args, dbcon)?,
     };
     Ok(())
 }
@@ -66,36 +66,36 @@ fn delete_acc(args: &DeleteArgs, dbcon: &Connection) -> Result {
     Ok(())
 }
 
-fn delete_api(args: &DeleteArgs, dbcon: &Connection) -> Result {
-    let apikeys = match &args.secret {
-        Some(apikeys) => apikeys.clone(),
+fn delete_key(args: &DeleteArgs, dbcon: &Connection) -> Result {
+    let keys = match &args.secret {
+        Some(keys) => keys.clone(),
         None => {
-            let api_keys = if args.multiple {
-                get::get_apikeys_from_user(dbcon)?
+            let gotkeys = if args.multiple {
+                get::get_keys_from_user(dbcon)?
             } else {
-                vec![get::get_apikey_from_user(dbcon)?]
+                vec![get::get_key_from_user(dbcon)?]
             };
-            api_keys.iter().map(|secret| secret.get_name()).collect()
+            gotkeys.iter().map(|secret| secret.get_name()).collect()
         }
     };
 
     let mut error_str = String::new();
     let mut successfull: Vec<String> = Vec::new();
-    for apikey in apikeys {
-        let exists = db::check_apikey_exists(&apikey, dbcon)?;
+    for key in keys {
+        let exists = db::check_key_exists(&key, dbcon)?;
         if !exists {
-            error_str.push_str(&format!("API Key '{}' does not exist\n", apikey));
+            error_str.push_str(&format!("Key '{}' does not exist\n", key));
             continue;
         }
         let opt = get_user_confirmation(&format!(
             "Are you sure you want to delete '{}' (yes/no)",
-            apikey
+            key
         ))?;
         if !opt {
             continue;
         }
-        db::delete_apikey_from_db(&apikey, dbcon)?;
-        successfull.push(apikey)
+        db::delete_key_from_db(&key, dbcon)?;
+        successfull.push(key)
     }
 
     if !successfull.is_empty() {

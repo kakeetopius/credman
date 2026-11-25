@@ -19,7 +19,7 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
     let secrets = match &args.secret {
         Some(s) => match sec_type {
             SecretType::Login => get_accounts(s, dbcon)?,
-            SecretType::Api => get_apikeys(s, dbcon)?,
+            SecretType::Key => get_keys(s, dbcon)?,
         },
         None => match sec_type {
             SecretType::Login => {
@@ -29,11 +29,11 @@ pub fn run_get(args: &GetArgs, dbcon: &Connection) -> Result {
                     vec![get_account_from_user(dbcon)?]
                 }
             }
-            SecretType::Api => {
+            SecretType::Key => {
                 if args.multiple {
-                    get_apikeys_from_user(dbcon)?
+                    get_keys_from_user(dbcon)?
                 } else {
-                    vec![get_apikey_from_user(dbcon)?]
+                    vec![get_key_from_user(dbcon)?]
                 }
             }
         },
@@ -91,14 +91,14 @@ fn get_accounts(accounts: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Ve
     Ok(account_objs)
 }
 
-fn get_apikeys(apikeys: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
-    let mut api_objs: Vec<Secret> = Vec::new();
+fn get_keys(keys: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
+    let mut key_objs: Vec<Secret> = Vec::new();
     let mut errors: Vec<anyhow::Error> = Vec::new();
 
-    for apikey in apikeys {
-        let apikey = db::get_apikey_from_db(apikey, dbcon);
-        match apikey {
-            Ok(api) => api_objs.push(api),
+    for key in keys {
+        let got_key = db::get_key_from_db(key, dbcon);
+        match got_key {
+            Ok(key) => key_objs.push(key),
             Err(e) => errors.push(e),
         }
     }
@@ -108,7 +108,7 @@ fn get_apikeys(apikeys: &Vec<String>, dbcon: &Connection) -> anyhow::Result<Vec<
         }
         eprintln!();
     }
-    Ok(api_objs)
+    Ok(key_objs)
 }
 
 pub fn get_account_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
@@ -121,14 +121,14 @@ pub fn get_account_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
     get_terminal_input_with_suggestions("Enter the account name", all_accounts)
 }
 
-pub fn get_apikey_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
-    let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
-    if all_api_keys.is_empty() {
+pub fn get_key_from_user(dbcon: &Connection) -> anyhow::Result<Secret> {
+    let all_keys = db::get_all_keys_from_db(dbcon)?;
+    if all_keys.is_empty() {
         return Err(anyhow!(
-            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
+            "No keys added yet. Use cman add <key_name> to add your first key. See cman add --help for more details."
         ));
     }
-    get_terminal_input_with_suggestions("Enter the api key name", all_api_keys)
+    get_terminal_input_with_suggestions("Enter the key name", all_keys)
 }
 
 pub fn get_accounts_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
@@ -142,12 +142,12 @@ pub fn get_accounts_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>>
     get_multiple_selections_from_terminal("Select accounts", all_accounts)
 }
 
-pub fn get_apikeys_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
-    let all_api_keys = db::get_all_apikeys_from_db(dbcon)?;
-    if all_api_keys.is_empty() {
+pub fn get_keys_from_user(dbcon: &Connection) -> anyhow::Result<Vec<Secret>> {
+    let all_keys = db::get_all_keys_from_db(dbcon)?;
+    if all_keys.is_empty() {
         return Err(anyhow!(
-            "No api keys added yet. Use cman add <api_name> to add your first api key. See cman add --help for more details."
+            "No keys added yet. Use cman add <key_name> to add your first key. See cman add --help for more details."
         ));
     }
-    get_multiple_selections_from_terminal("Select API Keys", all_api_keys)
+    get_multiple_selections_from_terminal("Select Keys", all_keys)
 }

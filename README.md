@@ -1,11 +1,11 @@
 # credman
 
-A simple command-line tool to manage and securely store secrets like login credentials and API keys locally.
+A simple command-line tool to manage and securely store secrets like login credentials and keys locally.
 
 ## Features
 
 - **Secure local storage**: Locally stores encrypted credentials.
-- **Multiple secret types**: Support for login credentials and API keys
+- **Multiple secret types**: Support for login credentials and keys
 - **Password generation**: Auto-generate secure passwords or provide your own
 - **JSON output**: Export secrets in JSON format for scripting
 
@@ -57,10 +57,10 @@ Add with a custom password (interactive prompt):
 cman add github --no-auto
 ```
 
-Add an API key:
+Add a key:
 
 ```bash
-cman add openai --type api
+cman add openai --type key
 ```
 
 Specify password length:
@@ -111,10 +111,10 @@ List all login credentials:
 cman ls
 ```
 
-List all API keys:
+List all keys:
 
 ```bash
-cman ls --type api
+cman ls --type key
 ```
 
 Output as JSON:
@@ -179,14 +179,14 @@ cman add credentials.txt --batch
 Each line contains comma-separated fields. The first field specifies the secret type.
 
 **Login format**: `login,secretname,username,password`
-**API format**: `api,secretname,username,description,key`
+**Key format**: `key,secretname,username,description,key`
 
 To auto-generate a password for a login, use `?` as the password:
 
 ```
 login,github,myusername,?
 login,gmail,myemail@gmail.com,?
-api,openai,user123,my api key,sk-1234567890abcdef
+key,openai,user123,my key,sk-1234567890abcdef
 ```
 
 </details>
@@ -198,7 +198,7 @@ api,openai,user123,my api key,sk-1234567890abcdef
 ## Secret Types
 
 - **Login**: Username and password credentials
-- **API**: API keys with optional description
+- **Key**: Keys with optional description
 
 ## Security
 

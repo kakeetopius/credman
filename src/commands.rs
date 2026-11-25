@@ -87,14 +87,14 @@ fn run_list(args: &LsArgs, dbcon: &Connection) -> Result {
     let results = if args.all {
         let mut results = Vec::new();
         results.extend(db::get_all_accounts_from_db(dbcon)?);
-        results.extend(db::get_all_apikeys_from_db(dbcon)?);
+        results.extend(db::get_all_keys_from_db(dbcon)?);
 
         results
     } else {
         let secret_type = args.secret_type.unwrap_or(SecretType::Login);
         match secret_type {
             SecretType::Login => db::get_all_accounts_from_db(dbcon)?,
-            SecretType::Api => db::get_all_apikeys_from_db(dbcon)?,
+            SecretType::Key => db::get_all_keys_from_db(dbcon)?,
         }
     };
 

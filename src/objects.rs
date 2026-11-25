@@ -10,13 +10,13 @@ use crate::util::{argparser::FieldType, ioutils::print_result};
 #[serde(tag = "type")]
 pub enum Secret {
     #[serde(rename = "login")]
-    Account(AccountObj),
-    #[serde(rename = "api_key")]
-    API(APIObj),
+    Login(LoginDetails),
+    #[serde(rename = "key")]
+    Key(KeyDetails),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct AccountObj {
+pub struct LoginDetails {
     pub account_name: String,
     pub user_name: String,
     pub password: String,
@@ -25,49 +25,49 @@ pub struct AccountObj {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct APIObj {
-    pub api_name: String,
+pub struct KeyDetails {
+    pub key_name: String,
     pub description: String,
     pub user_name: String,
-    pub api_key: String,
+    pub key_value: String,
     pub created_at: DateTime<Utc>,
-    pub api_key_last_changed: DateTime<Utc>,
+    pub key_last_changed: DateTime<Utc>,
 }
 
-impl From<AccountObj> for Secret {
-    fn from(value: AccountObj) -> Self {
-        Secret::Account(value)
+impl From<LoginDetails> for Secret {
+    fn from(value: LoginDetails) -> Self {
+        Secret::Login(value)
     }
 }
 
-impl From<APIObj> for Secret {
-    fn from(value: APIObj) -> Self {
-        Secret::API(value)
+impl From<KeyDetails> for Secret {
+    fn from(value: KeyDetails) -> Self {
+        Secret::Key(value)
     }
 }
 
 impl Display for Secret {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Account(acc) => write!(f, "{}", acc),
-            Self::API(api) => write!(f, "{}", api),
+            Self::Login(acc) => write!(f, "{}", acc),
+            Self::Key(key) => write!(f, "{}", key),
         }
     }
 }
 
-impl Display for AccountObj {
+impl Display for LoginDetails {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.account_name)
     }
 }
 
-impl Display for APIObj {
+impl Display for KeyDetails {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.api_name)
+        write!(f, "{}", self.key_name)
     }
 }
 
-impl AccountObj {
+impl LoginDetails {
     fn print(&self) {
         println!("Name:          {}", self.account_name);
         println!("User:          {}", self.user_name);
@@ -143,39 +143,39 @@ impl AccountObj {
     }
 }
 
-impl APIObj {
+impl KeyDetails {
     fn print(&self) {
-        println!("Name:          {}", self.api_name);
+        println!("Name:          {}", self.key_name);
         println!("User:          {}", self.user_name);
         println!("Desc:          {}", self.description);
-        println!("Key:           {}", self.api_key);
+        println!("Key:           {}", self.key_value);
         println!(
             "Created:       {}",
             self.created_at.with_timezone(&chrono::Local)
         );
         println!(
             "Last Changed:  {}",
-            self.api_key_last_changed.with_timezone(&chrono::Local)
+            self.key_last_changed.with_timezone(&chrono::Local)
         );
         println!();
     }
 
     fn print_field(&self, field: FieldType) {
         match field {
-            FieldType::Secname => print_result("Name", &self.api_name),
+            FieldType::Secname => print_result("Name", &self.key_name),
             FieldType::Desc => print_result("Desc", &self.description),
             FieldType::User => print_result("User", &self.user_name),
-            FieldType::Key => print_result("Key", &self.api_key),
+            FieldType::Key => print_result("Key", &self.key_value),
             _ => (),
         }
     }
 
     fn get_field(&self, field: FieldType) -> String {
         match field {
-            FieldType::Secname => self.api_name.clone(),
+            FieldType::Secname => self.key_name.clone(),
             FieldType::Desc => self.description.clone(),
             FieldType::User => self.user_name.clone(),
-            FieldType::Key => self.api_key.clone(),
+            FieldType::Key => self.key_value.clone(),
             _ => "".to_string(),
         }
     }
@@ -188,10 +188,10 @@ impl APIObj {
 
     fn get_field_json_str(&self, field: FieldType) -> String {
         let json_str = match field {
-            FieldType::Secname => serde_json::json!({"Name": &self.api_name}),
+            FieldType::Secname => serde_json::json!({"Name": &self.key_name}),
             FieldType::Desc => serde_json::json!({"Description": &self.description}),
             FieldType::User => serde_json::json!({"User": &self.user_name}),
-            FieldType::Key => serde_json::json!({"Key": &self.api_key}),
+            FieldType::Key => serde_json::json!({"Key": &self.key_value}),
             _ => return "".to_string(),
         };
         json_str.to_string()
@@ -199,10 +199,10 @@ impl APIObj {
 
     fn send_field_to_clipboard(&self, field: FieldType) -> anyhow::Result<()> {
         let data = match field {
-            FieldType::Secname => &self.api_name,
+            FieldType::Secname => &self.key_name,
             FieldType::Desc => &self.description,
             FieldType::User => &self.user_name,
-            FieldType::Key => &self.api_key,
+            FieldType::Key => &self.key_value,
             _ => "",
         };
 
@@ -216,8 +216,8 @@ impl APIObj {
 
     fn to_comma_separated_string(&self) -> String {
         format!(
-            "api,{},{},{},{}",
-            self.api_name, self.user_name, self.description, self.api_key
+            "key,{},{},{},{}",
+            self.key_name, self.user_name, self.description, self.key_value
         )
     }
 }
@@ -225,57 +225,57 @@ impl APIObj {
 impl Secret {
     pub fn print_field(&self, field: FieldType) {
         match self {
-            Self::API(apiobj) => apiobj.print_field(field),
-            Self::Account(accountobj) => accountobj.print_field(field),
+            Self::Key(keyobj) => keyobj.print_field(field),
+            Self::Login(accountobj) => accountobj.print_field(field),
         }
     }
 
     pub fn print(&self) {
         match self {
-            Self::API(api) => api.print(),
-            Self::Account(acc) => acc.print(),
+            Self::Key(key) => key.print(),
+            Self::Login(acc) => acc.print(),
         }
     }
 
     pub fn get_field(&self, field: FieldType) -> String {
         match self {
-            Self::API(api) => api.get_field(field),
-            Self::Account(acc) => acc.get_field(field),
+            Self::Key(key) => key.get_field(field),
+            Self::Login(acc) => acc.get_field(field),
         }
     }
 
     pub fn get_json_str(&self) -> String {
         match self {
-            Self::API(api) => api.get_json_str(),
-            Self::Account(acc) => acc.get_json_str(),
+            Self::Key(key) => key.get_json_str(),
+            Self::Login(acc) => acc.get_json_str(),
         }
     }
 
     pub fn get_field_json_str(&self, field: FieldType) -> String {
         match self {
-            Self::API(api) => api.get_field_json_str(field),
-            Self::Account(acc) => acc.get_field_json_str(field),
+            Self::Key(key) => key.get_field_json_str(field),
+            Self::Login(acc) => acc.get_field_json_str(field),
         }
     }
 
     pub fn get_name(&self) -> String {
         match self {
-            Self::Account(acc) => acc.account_name.clone(),
-            Self::API(api) => api.api_name.clone(),
+            Self::Login(acc) => acc.account_name.clone(),
+            Self::Key(key) => key.key_name.clone(),
         }
     }
 
     pub fn send_field_to_clipboard(&self, field: FieldType) -> anyhow::Result<()> {
         match self {
-            Self::Account(acc) => acc.send_field_to_clipboard(field),
-            Self::API(api) => api.send_field_to_clipboard(field),
+            Self::Login(acc) => acc.send_field_to_clipboard(field),
+            Self::Key(key) => key.send_field_to_clipboard(field),
         }
     }
 
     pub fn to_comma_separated_string(&self) -> String {
         match self {
-            Self::Account(acc) => acc.to_comma_separated_string(),
-            Self::API(api) => api.to_comma_separated_string(),
+            Self::Login(acc) => acc.to_comma_separated_string(),
+            Self::Key(key) => key.to_comma_separated_string(),
         }
     }
 }

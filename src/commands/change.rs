@@ -4,7 +4,7 @@ use rusqlite::Connection;
 use crate::{
     commands::{
         Result,
-        get::{get_account_from_user, get_apikey_from_user},
+        get::{get_account_from_user, get_key_from_user},
     },
     db,
     objects::Secret,
@@ -27,7 +27,7 @@ pub fn run_change(args: &ChangeArgs, dbcon: &Connection) -> Result {
 
     match sec_type {
         SecretType::Login => change_acc_field(args, dbcon)?,
-        SecretType::Api => change_api_field(args, dbcon)?,
+        SecretType::Key => change_key_field(args, dbcon)?,
     };
     Ok(())
 }
@@ -37,7 +37,7 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
         Some(s) => s.clone(),
         None => {
             let account = get_account_from_user(dbcon)?;
-            if let Secret::Account(acc) = account {
+            if let Secret::Login(acc) = account {
                 acc.account_name.clone()
             } else {
                 "".to_string()
@@ -96,30 +96,30 @@ fn change_acc_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     Ok(())
 }
 
-fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
+fn change_key_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
     let sec_name = match &args.secret {
         Some(s) => s.clone(),
         None => {
-            let api_obj = get_apikey_from_user(dbcon)?;
-            if let Secret::API(api) = api_obj {
-                api.api_name.clone()
+            let keyobj = get_key_from_user(dbcon)?;
+            if let Secret::Key(key) = keyobj {
+                key.key_name.clone()
             } else {
                 "".to_string()
             }
         }
     };
-    let exists = db::check_apikey_exists(&sec_name, dbcon)?;
+    let exists = db::check_key_exists(&sec_name, dbcon)?;
     if !exists {
-        return Err(anyhow!(format!("API '{}' does not exist", sec_name)));
+        return Err(anyhow!(format!("Key '{}' does not exist", sec_name)));
     }
     let fieldtype = args.field.unwrap_or(FieldType::Key);
     let new_value = match fieldtype {
         FieldType::Secname => {
-            let input = get_terminal_input("Enter new name for the api key", false, false)?;
-            let exists = db::check_apikey_exists(&input, dbcon)?;
+            let input = get_terminal_input("Enter new name for the key", false, false)?;
+            let exists = db::check_key_exists(&input, dbcon)?;
             if exists {
                 return Err(anyhow!(format!(
-                    "API with name '{}' already exists",
+                    "Key with name '{}' already exists",
                     sec_name
                 )));
             }
@@ -131,19 +131,19 @@ fn change_api_field(args: &ChangeArgs, dbcon: &Connection) -> Result {
             input
         }
         FieldType::Desc => {
-            get_terminal_input("Enter new description for the API key", false, false)?
+            get_terminal_input("Enter new description for the Key key", false, false)?
         }
         FieldType::User => get_terminal_input("Enter new user name", false, false)?,
-        FieldType::Key => get_terminal_input("Enter new API key", false, false)?,
+        FieldType::Key => get_terminal_input("Enter the new value of the key", false, false)?,
         _ => {
             return Err(anyhow!(format!(
-                "The '{}' field is invalid for an API key",
+                "The '{}' field is invalid for a key",
                 fieldtype
             )));
         }
     };
 
-    db::change_db_apikey_field(&sec_name, fieldtype, &new_value, dbcon)?;
+    db::change_db_key_field(&sec_name, fieldtype, &new_value, dbcon)?;
     println!("Changed Successfully");
     Ok(())
 }

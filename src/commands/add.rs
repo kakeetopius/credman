@@ -9,7 +9,7 @@ use rusqlite::Connection;
 use crate::{
     commands::Result,
     db,
-    objects::{APIObj, AccountObj},
+    objects::{KeyDetails, LoginDetails},
     util::{
         argparser::{AddArgs, SecretType},
         ioutils::get_terminal_input,
@@ -41,7 +41,7 @@ pub fn run_add(args: &AddArgs, dbcon: &Connection) -> Result {
 
     match sec_type {
         SecretType::Login => add_new_acc(sec_name, args.passlen, args.no_auto, dbcon)?,
-        SecretType::Api => add_new_api(sec_name, dbcon)?,
+        SecretType::Key => add_new_key(sec_name, dbcon)?,
     };
     println!("Added Successfully");
     Ok(())
@@ -61,7 +61,7 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
     };
 
     db::add_account_to_db(
-        &AccountObj {
+        &LoginDetails {
             account_name: name.to_string(),
             user_name,
             password: pass,
@@ -72,25 +72,29 @@ fn add_new_acc(name: &str, passlen: Option<usize>, noautopass: bool, dbcon: &Con
     Ok(())
 }
 
-fn add_new_api(name: &str, dbcon: &Connection) -> Result {
-    let exists = db::check_apikey_exists(name, dbcon)?;
+fn add_new_key(name: &str, dbcon: &Connection) -> Result {
+    let exists = db::check_key_exists(name, dbcon)?;
     if exists {
-        return Err(anyhow!(format!("API Key '{}' already exists", name)));
+        return Err(anyhow!(format!("Key '{}' already exists", name)));
     }
     let user_name = get_terminal_input(
-        "Enter username for the account associated with API Key (if any)",
+        "Enter username for the account associated with Key (if any)",
         false,
         false,
     )?;
-    let desc = get_terminal_input("Enter a short description for the API key", false, false)?;
-    let apikey = get_terminal_input("Enter API Key", false, false)?;
+    let desc = get_terminal_input(
+        "Enter a short description for the key (optional)",
+        false,
+        false,
+    )?;
+    let key_value = get_terminal_input("Enter the Key", false, false)?;
 
-    db::add_apikey_to_db(
-        &APIObj {
-            api_name: name.to_string(),
+    db::add_key_to_db(
+        &KeyDetails {
+            key_name: name.to_string(),
             description: desc,
             user_name,
-            api_key: apikey,
+            key_value,
             ..Default::default()
         },
         dbcon,
@@ -120,15 +124,15 @@ fn add_secrets_from_batch(batch_file: &str, passlen: Option<usize>, dbcon: &Conn
                 Ok(name) => successfull.push(name),
                 Err(e) => errors.push(e),
             }
-        } else if fields[0] == "api" {
-            let result = add_api_from_file_line(dbcon, &fields, lineno);
+        } else if fields[0] == "key" {
+            let result = add_key_from_file_line(dbcon, &fields, lineno);
             match result {
                 Ok(name) => successfull.push(name),
                 Err(e) => errors.push(e),
             }
         } else {
             errors.push(anyhow!(format!(
-                "Line {}: First field should be 'login' or 'api'\n",
+                "Line {}: First field should be 'login' or 'key'\n",
                 lineno
             )));
         }
@@ -186,7 +190,7 @@ fn add_acc_from_file_line(
         )));
     }
 
-    let acc = AccountObj {
+    let acc = LoginDetails {
         account_name: account_name.to_string(),
         user_name: user_name.to_string(),
         password: pass,
@@ -198,7 +202,7 @@ fn add_acc_from_file_line(
     Ok(acc.account_name)
 }
 
-fn add_api_from_file_line(
+fn add_key_from_file_line(
     dbcon: &Connection,
     fields: &[&str],
     lineno: i32,
@@ -207,37 +211,38 @@ fn add_api_from_file_line(
         return Err(anyhow!(format!("Line {}: Wrong number of fields", lineno)));
     }
 
-    let (api_name, user_name, description, api_key) = (fields[1], fields[2], fields[3], fields[4]);
+    let (key_name, user_name, description, key_value) =
+        (fields[1], fields[2], fields[3], fields[4]);
 
-    let exists = db::check_apikey_exists(fields[1], dbcon)?;
+    let exists = db::check_key_exists(fields[1], dbcon)?;
     if exists {
         return Err(anyhow!(format!(
-            "Line {}: API Key '{}' already exists",
-            lineno, api_name
+            "Line {}: Key '{}' already exists",
+            lineno, key_name
         )));
-    } else if api_name == "master" {
+    } else if key_name == "master" {
         return Err(anyhow!(format!(
-            "Line {}: Api name cannot be 'master'.",
+            "Line {}: Key name cannot be 'master'.",
             lineno
         )));
-    } else if api_name.is_empty() {
+    } else if key_name.is_empty() {
         return Err(anyhow!(format!(
-            "Line {}: Api name cannot be empty.",
+            "Line {}: Key name cannot be empty.",
             lineno
         )));
-    } else if api_key.is_empty() {
-        return Err(anyhow!(format!("Line {}: No Api Key provided", lineno)));
+    } else if key_value.is_empty() {
+        return Err(anyhow!(format!("Line {}: No Key provided", lineno)));
     }
 
-    let api = APIObj {
-        api_name: api_name.to_string(),
+    let key = KeyDetails {
+        key_name: key_name.to_string(),
         user_name: user_name.to_string(),
         description: description.to_string(),
-        api_key: api_key.to_string(),
+        key_value: key_value.to_string(),
         ..Default::default()
     };
 
-    db::add_apikey_to_db(&api, dbcon)?;
+    db::add_key_to_db(&key, dbcon)?;
 
-    Ok(api.api_name)
+    Ok(key.key_name)
 }
