@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand, ValueEnum, ValueHint};
 use clap_complete::Shell;
 
 /// A simple tool to manage and securely store secrets like login credentials and keys locally.
@@ -16,11 +16,11 @@ pub struct CmanArgs {
     #[command(subcommand)]
     pub command: Commands,
 
-    #[arg(long, global = true)]
+    #[arg(long, global = true, value_hint = ValueHint::FilePath)]
     /// The path to the database file.
     pub db_file: Option<String>,
 
-    #[arg(long, global = true)]
+    #[arg(long, global = true, value_hint = ValueHint::FilePath)]
     /// A path to a file containing the decryption password on the first line.
     pub passwd_file: Option<String>,
 }
@@ -101,7 +101,7 @@ pub struct AddArgs {
     pub no_auto: bool,
 
     /// Add secrets from a file containing credentials one per line (Use cman add --help for more details).
-    #[arg(short, long, value_name = "PATH")]
+    #[arg(short, long, value_name = "PATH", value_hint = ValueHint::FilePath)]
     pub batch: Option<String>,
 }
 
@@ -210,7 +210,7 @@ pub struct ExportArgs {
     pub pretty: bool,
 
     /// File to write the exported secrets to. If omitted, output is printed to stdout.
-    #[arg(short, long, value_name = "PATH")]
+    #[arg(short, long, value_name = "PATH", value_hint = ValueHint::FilePath)]
     pub output_file: Option<String>,
 
     #[arg(short, long)]

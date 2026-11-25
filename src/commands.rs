@@ -1,7 +1,4 @@
-use std::{
-    env::{home_dir, var_os},
-    path::Path,
-};
+use std::{env::var_os, path::Path};
 
 use anyhow::{Context, anyhow};
 use clap::CommandFactory;
@@ -40,19 +37,10 @@ pub fn run_command(args: CmanArgs) -> Result {
         _ => {}
     }
 
-    let dbcon = {
-        let dbpath = match get_db_path_from_env() {
-            Some(p) => p,
-            None => {
-                return Err(anyhow!(format!(
-                    "Could not get Database file path. Try setting the {} environment variable.",
-                    DB_ENV_VAR
-                )));
-            }
-        };
-
-        db::get_db_con(&dbpath, try_get_decryption_pass(args.passwd_file)?)?
-    };
+    let dbcon = db::get_db_con(
+        &get_db_path(args.db_file)?,
+        try_get_decryption_pass(args.passwd_file)?,
+    )?;
 
     match &args.command {
         Commands::Add(a) => add::run_add(a, &dbcon),
@@ -162,6 +150,24 @@ fn run_pull(args: &PullArgs) -> Result {
     Ok(())
 }
 
+fn get_db_path(db_file: Option<String>) -> anyhow::Result<String> {
+    let dbpath = match db_file {
+        Some(path) => path,
+        None => match get_db_path_from_env() {
+            Some(env_path) => env_path,
+            None => {
+                std::env::home_dir()
+                    .context("Failed to get user's home directory when trying to get the credential database path")?
+                    .join(".creds.db")
+                    .to_string_lossy()
+                    .to_string()
+            }
+        },
+    };
+
+    Ok(dbpath)
+}
+
 fn get_db_path_from_env() -> Option<String> {
     let path = var_os(DB_ENV_VAR).and_then(|v| v.into_string().ok());
 
@@ -171,30 +177,28 @@ fn get_db_path_from_env() -> Option<String> {
         return Some(credman_path);
     }
 
-    let home = home_dir();
-    if let Some(home_path) = home {
-        let creds_path_buf = home_path.join(".creds.db");
-        return Some(creds_path_buf.to_string_lossy().to_string());
-    }
-
     None
 }
 
-fn try_get_decryption_pass(file_name: Option<String>) -> anyhow::Result<Option<String>> {
-    let file = match file_name {
+// this func will try to get the decryption password from the file 'file' if 'file' is Some() else
+// it will use the file name specified by env var CMAN_PASSWD_FILE.
+// It will return Ok(None) if the file got via the argument 'file' or via the CMAN_PASSWD_FILE
+// doesn't exist or if the argument 'file' is None and CMAN_PASSWD_FILE is not set.
+fn try_get_decryption_pass(file: Option<String>) -> anyhow::Result<Option<String>> {
+    let file = match file {
         Some(f) => f,
-        None => {
-            let env = var_os(CMAN_PASSWD_FILE).and_then(|v| v.into_string().ok());
-            match env {
-                Some(p) => p,
-                None => return Ok(None), // could not get password file from file_name or from env
-                                         // so decryption func will prompt user.
-            }
-        }
+        None => match var_os(CMAN_PASSWD_FILE).and_then(|v| v.into_string().ok()) {
+            Some(path) => path,
+            None => return Ok(None),
+        },
     };
 
+    if !Path::new(&file).exists() {
+        return Ok(None);
+    }
+
     let content = std::fs::read_to_string(&file)
-        .context(format!("Could not open the password file {file}"))?;
+        .context(format!("Could not read the password file {file}"))?;
 
     if let Some(pass) = content.lines().next() {
         return Ok(Some(pass.to_owned()));
