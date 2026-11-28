@@ -93,8 +93,8 @@ pub fn print_secrets(secrets: &Vec<Secret>, getargs: &GetArgs) -> anyhow::Result
         secret.print();
     }
 
-    if secrets.len() == 1 {
-        // send whatever field was requested to clipboard if only one was requested
+    if secrets.len() == 1 && !getargs.no_clipboard {
+        // send whatever field was requested to clipboard if only 1 secret was requested
         secrets[0].send_field_to_clipboard(getargs.field.unwrap_or(default_field))?;
     }
 

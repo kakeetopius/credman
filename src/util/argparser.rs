@@ -156,6 +156,10 @@ pub struct GetArgs {
     #[arg(short, long)]
     /// Print json ouput as pretty-formatted JSON
     pub pretty: bool,
+
+    /// Do not copy the secret to the clipboard
+    #[arg(long = "no-clipboard")]
+    pub no_clipboard: bool,
 }
 
 #[derive(Args, Debug)]
